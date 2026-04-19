@@ -1,0 +1,29 @@
+name: CuteCat
+options:
+  minimumXcodeGenVersion: 2.45.0
+settings:
+  base:
+    PRODUCT_BUNDLE_IDENTIFIER: com.soukon.cutecat
+    PRODUCT_NAME: CuteCat
+    SWIFT_VERSION: 6.0
+    DEVELOPMENT_TEAM: ""
+packages:
+  LlamaSwift:
+    url: https://github.com/mattt/llama.swift
+    exactVersion: 2.8575.0
+targets:
+  CuteCat:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: CuteCat
+    dependencies:
+      - package: LlamaSwift
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1,2"
+        INFOPLIST_FILE: CuteCat/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SUPPORTS_MACCATALYST: NO
