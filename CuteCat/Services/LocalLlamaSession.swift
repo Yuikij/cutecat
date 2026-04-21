@@ -45,8 +45,8 @@ actor LocalLlamaSession {
     private var vocab: OpaquePointer?
     private var loadedModelPath: String?
 
-    private let maxContextTokens: Int = 2048
-    private let maxReplyTokens: Int = 96
+    private let maxContextTokens: Int = 1024
+    private let maxReplyTokens: Int = 80
 
     func loadModel(at path: String) throws {
         guard FileManager.default.fileExists(atPath: path) else {
@@ -63,7 +63,10 @@ actor LocalLlamaSession {
             llama_model_free(model)
         }
 
-        let modelParams = llama_model_default_params()
+        var modelParams = llama_model_default_params()
+        #if targetEnvironment(simulator)
+        modelParams.n_gpu_layers = 0
+        #endif
 
         guard let loadedModel = path.withCString({ llama_model_load_from_file($0, modelParams) }) else {
             model = nil
@@ -94,15 +97,17 @@ actor LocalLlamaSession {
         loadedModelPath = nil
     }
 
-    func generateReply(systemPrompt: String, messages: [PetChatMessage]) throws -> String {
+    func generateReply(systemPrompt: String, messages: [PetChatMessage], maxTokens: Int? = nil, temperature: Float? = nil) throws -> String {
         guard let model, let vocab else {
             throw LocalLlamaError.modelFileMissing
         }
 
+        let replyLimit = maxTokens ?? maxReplyTokens
         let prompt = buildPrompt(systemPrompt: systemPrompt, messages: messages)
         let promptTokens = try tokenize(prompt, vocab: vocab, addBOS: true, special: true)
+        print("🦙 [LLM] prompt=\(promptTokens.count) tokens, maxReply=\(replyLimit)")
 
-        let requiredContext = max(1024, min(maxContextTokens, promptTokens.count + maxReplyTokens + 32))
+        let requiredContext = max(1024, min(maxContextTokens, promptTokens.count + replyLimit + 32))
         guard promptTokens.count < requiredContext - 32 else {
             throw LocalLlamaError.promptTooLong
         }
@@ -111,7 +116,7 @@ actor LocalLlamaSession {
 
         var contextParams = llama_context_default_params()
         contextParams.n_ctx = UInt32(requiredContext)
-        contextParams.n_batch = UInt32(min(512, max(promptTokens.count, 128)))
+        contextParams.n_batch = UInt32(max(promptTokens.count, 128))
         contextParams.n_threads = Int32(threadCount)
         contextParams.n_threads_batch = Int32(threadCount)
 
@@ -126,10 +131,11 @@ actor LocalLlamaSession {
         }
         defer { llama_sampler_free(sampler) }
 
+        let temp = temperature ?? 0.8
         llama_sampler_chain_add(sampler, llama_sampler_init_top_k(40))
         llama_sampler_chain_add(sampler, llama_sampler_init_top_p(0.9, 1))
-        llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.8))
-        llama_sampler_chain_add(sampler, llama_sampler_init_dist(1234))
+        llama_sampler_chain_add(sampler, llama_sampler_init_temp(temp))
+        llama_sampler_chain_add(sampler, llama_sampler_init_dist(UInt32.random(in: 0...UInt32.max)))
 
         var batch = llama_batch_init(Int32(max(promptTokens.count, 1)), 0, 1)
         defer { llama_batch_free(batch) }
@@ -150,21 +156,28 @@ actor LocalLlamaSession {
             batch.logits[Int(batch.n_tokens) - 1] = 1
         }
 
+        let t0 = CFAbsoluteTimeGetCurrent()
+
         guard llama_decode(context, batch) == 0 else {
             throw LocalLlamaError.decodeFailed
         }
 
+        let prefillMs = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
+        print("🦙 [LLM] prefill \(prefillMs)ms")
+
         var output = ""
         var tokenPieceBuffer: [CChar] = []
         var currentPosition = Int32(promptTokens.count)
+        var generatedTokens = 0
 
-        for _ in 0..<maxReplyTokens {
+        for _ in 0..<replyLimit {
             let nextToken = llama_sampler_sample(sampler, context, batch.n_tokens - 1)
 
             if llama_vocab_is_eog(vocab, nextToken) {
                 break
             }
 
+            generatedTokens += 1
             if let piece = tokenToPiece(token: nextToken, vocab: vocab, buffer: &tokenPieceBuffer) {
                 output += piece
             }
@@ -185,6 +198,9 @@ actor LocalLlamaSession {
             }
         }
 
+        let totalMs = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
+        print("🦙 [LLM] done: \(generatedTokens) tokens in \(totalMs)ms → \"\(output.prefix(60))\"")
+
         let cleaned = cleanReply(output)
         guard cleaned.isEmpty == false else {
             throw LocalLlamaError.emptyReply
@@ -193,12 +209,11 @@ actor LocalLlamaSession {
         return cleaned
     }
 
-    /// Build a prompt for interaction responses (non-chat, single-turn).
-    func generateInteractionReply(systemPrompt: String, userMessage: String) throws -> String {
+    func generateInteractionReply(systemPrompt: String, userMessage: String, maxTokens: Int? = nil, temperature: Float? = nil) throws -> String {
         let messages = [
             PetChatMessage(id: UUID(), role: .user, text: userMessage, createdAt: .now)
         ]
-        return try generateReply(systemPrompt: systemPrompt, messages: messages)
+        return try generateReply(systemPrompt: systemPrompt, messages: messages, maxTokens: maxTokens, temperature: temperature)
     }
 
     private func buildPrompt(systemPrompt: String, messages: [PetChatMessage]) -> String {
@@ -206,9 +221,11 @@ actor LocalLlamaSession {
             "<|im_start|>system\n\(sanitize(systemPrompt))<|im_end|>"
         ]
 
-        for message in messages.suffix(10) {
+        let recentMessages = messages.suffix(4)
+        for message in recentMessages {
             let role = message.role == .user ? "user" : "assistant"
-            parts.append("<|im_start|>\(role)\n\(sanitize(message.text))<|im_end|>")
+            let text = String(sanitize(message.text).prefix(80))
+            parts.append("<|im_start|>\(role)\n\(text)<|im_end|>")
         }
 
         parts.append("<|im_start|>assistant\n<think>\n\n</think>\n\n")
@@ -300,8 +317,42 @@ actor LocalLlamaSession {
             .replacingOccurrences(of: "<|im_start|>assistant", with: "")
             .replacingOccurrences(of: "<|im_start|>", with: "")
             .replacingOccurrences(of: "<|im_end|>", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        return result
+        result = Self.stripActionNarration(result)
+
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func stripActionNarration(_ text: String) -> String {
+        var s = text
+        let bracketPatterns = [
+            "（[^）]{0,30}）",
+            "\\([^)]{0,30}\\)",
+        ]
+        for pat in bracketPatterns {
+            if let regex = try? NSRegularExpression(pattern: pat) {
+                s = regex.stringByReplacingMatches(in: s, range: NSRange(s.startIndex..., in: s), withTemplate: "")
+            }
+        }
+
+        let prefixes = ["喵呜", "喵鸣", "喵呜喵呜", "汪汪"]
+        for prefix in prefixes {
+            while s.hasPrefix(prefix) {
+                s = String(s.dropFirst(prefix.count))
+                for ch: Character in ["—", "～", "~", "！", "!", " ", "，", ",", "…", "\n"] {
+                    while s.hasPrefix(String(ch)) { s = String(s.dropFirst()) }
+                }
+            }
+        }
+
+        s = s.split(separator: "\n")
+            .filter { line in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                return !trimmed.isEmpty
+            }
+            .prefix(3)
+            .joined(separator: "\n")
+
+        return s
     }
 }

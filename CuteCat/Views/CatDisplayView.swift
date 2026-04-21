@@ -3,45 +3,75 @@ import SwiftUI
 struct CatDisplayView: View {
     let mood: CatMood
     let comment: String?
-    @State private var bounceOffset: CGFloat = 0
-    @State private var rotation: Double = 0
+    let emoji: String
+    var moodWord: String?
+    var onTouch: ((Interaction) -> Void)?
+
+    @State private var frameIndex: Int = 0
+    @State private var touchHint: String?
+    @State private var specialFrames: [String]?
+    @State private var specialCountdown: Int = 0
+
+    init(mood: CatMood, comment: String?, emoji: String = "🐟", moodWord: String? = nil, onTouch: ((Interaction) -> Void)? = nil) {
+        self.mood = mood
+        self.comment = comment
+        self.emoji = emoji
+        self.moodWord = moodWord
+        self.onTouch = onTouch
+    }
 
     var body: some View {
         VStack(spacing: 12) {
-            Text(mood.face)
-                .font(.system(size: 100))
-                .offset(y: bounceOffset)
-                .rotationEffect(.degrees(rotation))
-                .animation(
-                    .easeInOut(duration: idleAnimationDuration)
-                    .repeatForever(autoreverses: true),
-                    value: bounceOffset
-                )
-                .animation(
-                    .easeInOut(duration: 2)
-                    .repeatForever(autoreverses: true),
-                    value: rotation
-                )
-                .onAppear {
-                    bounceOffset = -8
-                    rotation = moodRotation
+            GeometryReader { geo in
+                ZStack {
+                    Text(currentFrame)
+                        .font(.system(size: 20, design: .monospaced))
+                        .foregroundStyle(textColor)
+                        .multilineTextAlignment(.center)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .animation(.easeInOut(duration: 0.15), value: frameIndex)
                 }
-                .onChange(of: mood) { _, newMood in
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
-                        bounceOffset = -20
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        withAnimation(.easeInOut(duration: idleAnimationDuration).repeatForever(autoreverses: true)) {
-                            bounceOffset = -8
+                .contentShape(Rectangle())
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onEnded { value in
+                            guard onTouch != nil, mood != .dead else { return }
+                            let ratio = value.location.y / geo.size.height
+                            if ratio < 0.35 {
+                                touchHint = "摸头 ✋"
+                                onTouch?(.headpat)
+                            } else if ratio > 0.65 {
+                                touchHint = "摸肚子 🐾"
+                                onTouch?(.belly)
+                            } else {
+                                touchHint = "撒娇 💕"
+                                onTouch?(.cuddle)
+                            }
+                            clearHint()
                         }
+                )
+                .overlay(alignment: .bottom) {
+                    if let hint = touchHint {
+                        Text(hint)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(CozyPalette.textPrimary.opacity(0.7))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule().fill(CozyPalette.cardAdaptive)
+                            )
+                            .transition(.opacity.combined(with: .scale))
+                            .offset(y: -4)
                     }
-                    rotation = moodRotation(for: newMood)
                 }
+                .animation(.easeOut(duration: 0.2), value: touchHint)
+            }
+            .frame(minHeight: 140)
 
             if let comment {
                 Text(comment)
                     .font(.subheadline)
-                    .foregroundStyle(CozyPalette.wood)
+                    .foregroundStyle(CozyPalette.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
                     .padding(.horizontal, 24)
@@ -50,28 +80,68 @@ struct CatDisplayView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)
-    }
-
-    private var idleAnimationDuration: Double {
-        switch mood {
-        case .sleeping: 3.0
-        case .happy, .playing: 0.8
-        case .eating: 0.6
-        case .dead: 0
-        default: 1.5
+        .onAppear {
+            startAnimation()
+        }
+        .onChange(of: mood) { _, _ in
+            frameIndex = 0
+            specialFrames = nil
+            specialCountdown = 0
+            startAnimation()
         }
     }
 
-    private var moodRotation: Double {
-        moodRotation(for: mood)
+    private var activeFrames: [String] {
+        specialFrames ?? CatFrames.frames(for: mood)
     }
 
-    private func moodRotation(for mood: CatMood) -> Double {
-        switch mood {
-        case .playing: 5
-        case .eating: 3
-        case .disciplined: -3
-        default: 0
+    private var currentFrame: String {
+        guard activeFrames.isEmpty == false else { return "" }
+        let frame = activeFrames[frameIndex % activeFrames.count]
+        return CatFrames.replaceEmoji(in: frame, emoji: emoji, word: moodWord)
+    }
+
+    private var textColor: Color {
+        let hour = Calendar.current.component(.hour, from: .now)
+        return (hour >= 19 || hour < 6) ? CozyPalette.cream : CozyPalette.plum
+    }
+
+    private func startAnimation() {
+        let interval: TimeInterval = mood == .dead ? 0 : 0.5
+        guard interval > 0 else { return }
+
+        Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(Int(interval * 1000)))
+                await MainActor.run {
+                    frameIndex = (frameIndex + 1) % max(activeFrames.count, 1)
+
+                    if mood == .neutral || mood == .happy {
+                        specialCountdown += 1
+                        if specialCountdown >= 12 {
+                            specialCountdown = 0
+                            if let special = CatFrames.randomIdleSpecial() {
+                                specialFrames = special
+                                frameIndex = 0
+                                Task {
+                                    try? await Task.sleep(for: .milliseconds(special.count * 800))
+                                    await MainActor.run {
+                                        specialFrames = nil
+                                        frameIndex = 0
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func clearHint() {
+        Task {
+            try? await Task.sleep(for: .seconds(1))
+            touchHint = nil
         }
     }
 }

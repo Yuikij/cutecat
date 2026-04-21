@@ -8,6 +8,7 @@ struct CuteCatApp: App {
 
     private let tickTimer = Timer.publish(every: 300, on: .main, in: .common).autoconnect()
     private let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
+    private let eventTimer = Timer.publish(every: 120, on: .main, in: .common).autoconnect()
 
     var body: some Scene {
         WindowGroup {
@@ -21,9 +22,18 @@ struct CuteCatApp: App {
                         await store.llmTick()
                     }
                 }
+                .onReceive(eventTimer) { _ in
+                    Task {
+                        await store.tryTriggerEvent()
+                    }
+                }
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {
                         store.tick()
+                        store.checkDailyStreak()
+                        Task {
+                            await store.tryTriggerEvent()
+                        }
                     }
                 }
         }

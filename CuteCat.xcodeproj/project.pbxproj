@@ -15,18 +15,30 @@
 		451F936E7A9EC13A3ED48FA5 /* CatDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF221F7D47D4854CCA10545 /* CatDisplayView.swift */; };
 		65B0A6F9BACB64E94B771441 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A7DC34305CC75651E290860C /* Assets.xcassets */; };
 		666F1A4651DEF79BDA457691 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771520FBA6660A57FA58B390 /* ChatView.swift */; };
+		6AA39EE6C0DECECB2AEFBD70 /* CatFrames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DEB81A9C5A04681402E61F /* CatFrames.swift */; };
 		9B5476FE21B22B559C7305C7 /* CuteCatAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 627F89F977A410C864DFFA42 /* CuteCatAppDelegate.swift */; };
+		9D9BB2A47A62D07627375CA2 /* ShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE366443A38AA37D3079105 /* ShopView.swift */; };
 		B236A6B1FF1763F58FE55F93 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5F41719D3BC7064D0A80A2 /* HomeView.swift */; };
 		BBB9BEB4FA017C79168346C9 /* PetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E6FFDC31D189AEA95B0885 /* PetStore.swift */; };
 		C89D65D3A4B23EE0BE753832 /* CozyChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12EF8AE7082FEFFBEBD2621B /* CozyChrome.swift */; };
 		DBE0CF9CD0BBA5470D944F32 /* StatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A41C1A8FF426B8F6AEC79559 /* StatusView.swift */; };
+		B2C3D4E5F6A7B8C9D0E1F2A1 /* Qwen3.5-0.8B-Q4_K_M.gguf in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* Qwen3.5-0.8B-Q4_K_M.gguf */; };
+		D4E5F6A7B8C9D0E1F2A1B2C3 /* EventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F6A7B8C9D0E1F2A1B2C3D4 /* EventView.swift */; };
+		F1A2B3C4D5E6F7A8B9C0D1E2 /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B3C4D5E6F7A8B9C0D1E2F3 /* SpeechService.swift */; };
+		B3C4D5E6F7A8B9C0D1E2F3A4 /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D5E6F7A8B9C0D1E2F3A4B5 /* WeatherService.swift */; };
+		D5E6F7A8B9C0D1E2F3A4B5C6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6F7A8B9C0D1E2F3A4B5C6D7 /* SettingsView.swift */; };
+		E7F8A9B0C1D2E3F4A5B6C7D8 /* EmbeddingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A9B0C1D2E3F4A5B6C7D8E9 /* EmbeddingSession.swift */; };
+		A9B0C1D2E3F4A5B6C7D8E9FA /* CatMemoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C1D2E3F4A5B6C7D8E9FA0B /* CatMemoryStore.swift */; };
+		C1D2E3F4A5B6C7D8E9FA0B1C /* bge-small-zh-v1.5-q4_k_m.gguf in Resources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C7D8E9FA0B1C2D /* bge-small-zh-v1.5-q4_k_m.gguf */; };
+		1A2B3C4D5E6F7A8B9C0D1E2F /* CatProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B4C5D6E7F8A9B0C1D2E3F /* CatProfileView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0356E00965D2E9F21AC09688 /* ModelDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadService.swift; sourceTree = "<group>"; };
 		12EF8AE7082FEFFBEBD2621B /* CozyChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CozyChrome.swift; sourceTree = "<group>"; };
 		46E1618D4B8B492345406FE9 /* LocalLlamaSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLlamaSession.swift; sourceTree = "<group>"; };
-		4E3A2C9B652FE115F800FD4F /* CuteCat.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CuteCat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E3A2C9B652FE115F800FD4F /* CuteCat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CuteCat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		53DEB81A9C5A04681402E61F /* CatFrames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatFrames.swift; sourceTree = "<group>"; };
 		627F89F977A410C864DFFA42 /* CuteCatAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CuteCatAppDelegate.swift; sourceTree = "<group>"; };
 		771520FBA6660A57FA58B390 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		89E6FFDC31D189AEA95B0885 /* PetStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetStore.swift; sourceTree = "<group>"; };
@@ -35,8 +47,18 @@
 		AD5F41719D3BC7064D0A80A2 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		B0211FEA7FFBF51C4D575152 /* PetModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetModels.swift; sourceTree = "<group>"; };
 		D6E21AA5012310720D13DC5E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DBE366443A38AA37D3079105 /* ShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShopView.swift; sourceTree = "<group>"; };
 		DDF221F7D47D4854CCA10545 /* CatDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatDisplayView.swift; sourceTree = "<group>"; };
+		2A3B4C5D6E7F8A9B0C1D2E3F /* CatProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatProfileView.swift; sourceTree = "<group>"; };
 		F9A0E0B0EAC71726E2A57649 /* CuteCatApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CuteCatApp.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* Qwen3.5-0.8B-Q4_K_M.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Qwen3.5-0.8B-Q4_K_M.gguf"; sourceTree = "<group>"; };
+		E5F6A7B8C9D0E1F2A1B2C3D4 /* EventView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventView.swift; sourceTree = "<group>"; };
+		A2B3C4D5E6F7A8B9C0D1E2F3 /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
+		C4D5E6F7A8B9C0D1E2F3A4B5 /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
+		E6F7A8B9C0D1E2F3A4B5C6D7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F8A9B0C1D2E3F4A5B6C7D8E9 /* EmbeddingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddingSession.swift; sourceTree = "<group>"; };
+		B0C1D2E3F4A5B6C7D8E9FA0B /* CatMemoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatMemoryStore.swift; sourceTree = "<group>"; };
+		D2E3F4A5B6C7D8E9FA0B1C2D /* bge-small-zh-v1.5-q4_k_m.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "bge-small-zh-v1.5-q4_k_m.gguf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,8 +76,12 @@
 		01D45EA1E7D9830477502FFB /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				B0C1D2E3F4A5B6C7D8E9FA0B /* CatMemoryStore.swift */,
+				F8A9B0C1D2E3F4A5B6C7D8E9 /* EmbeddingSession.swift */,
 				46E1618D4B8B492345406FE9 /* LocalLlamaSession.swift */,
 				0356E00965D2E9F21AC09688 /* ModelDownloadService.swift */,
+				A2B3C4D5E6F7A8B9C0D1E2F3 /* SpeechService.swift */,
+				C4D5E6F7A8B9C0D1E2F3A4B5 /* WeatherService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -72,10 +98,15 @@
 			isa = PBXGroup;
 			children = (
 				DDF221F7D47D4854CCA10545 /* CatDisplayView.swift */,
+				53DEB81A9C5A04681402E61F /* CatFrames.swift */,
 				771520FBA6660A57FA58B390 /* ChatView.swift */,
 				12EF8AE7082FEFFBEBD2621B /* CozyChrome.swift */,
+				E5F6A7B8C9D0E1F2A1B2C3D4 /* EventView.swift */,
 				AD5F41719D3BC7064D0A80A2 /* HomeView.swift */,
+				DBE366443A38AA37D3079105 /* ShopView.swift */,
 				A41C1A8FF426B8F6AEC79559 /* StatusView.swift */,
+				E6F7A8B9C0D1E2F3A4B5C6D7 /* SettingsView.swift */,
+				2A3B4C5D6E7F8A9B0C1D2E3F /* CatProfileView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -114,8 +145,18 @@
 			children = (
 				A7DC34305CC75651E290860C /* Assets.xcassets */,
 				D6E21AA5012310720D13DC5E /* Info.plist */,
+				C3D4E5F6A7B8C9D0E1F2A1B2 /* Models */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		C3D4E5F6A7B8C9D0E1F2A1B2 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				D2E3F4A5B6C7D8E9FA0B1C2D /* bge-small-zh-v1.5-q4_k_m.gguf */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* Qwen3.5-0.8B-Q4_K_M.gguf */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		F70AA866CBCA366037BC7F5E /* Models */ = {
@@ -158,11 +199,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-					E8AFFC27725F63B63027C6C0 = {
-						DevelopmentTeam = "";
-					};
-				};
 			};
 			buildConfigurationList = CA705739BFB5950BBA31A14F /* Build configuration list for PBXProject "CuteCat" */;
 			developmentRegion = en;
@@ -174,7 +210,7 @@
 			mainGroup = 65E64284C66A0EAFDACB720A;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				B41545F225C22A0E185C2B71 /* XCRemoteSwiftPackageReference "llama.swift" */,
+				B41545F225C22A0E185C2B71 /* XCRemoteSwiftPackageReference "llama" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B96D07DF47D3E6FEFB5589A2 /* Products */;
@@ -192,6 +228,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				65B0A6F9BACB64E94B771441 /* Assets.xcassets in Resources */,
+				C1D2E3F4A5B6C7D8E9FA0B1C /* bge-small-zh-v1.5-q4_k_m.gguf in Resources */,
+				B2C3D4E5F6A7B8C9D0E1F2A1 /* Qwen3.5-0.8B-Q4_K_M.gguf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,6 +241,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				451F936E7A9EC13A3ED48FA5 /* CatDisplayView.swift in Sources */,
+				6AA39EE6C0DECECB2AEFBD70 /* CatFrames.swift in Sources */,
 				666F1A4651DEF79BDA457691 /* ChatView.swift in Sources */,
 				C89D65D3A4B23EE0BE753832 /* CozyChrome.swift in Sources */,
 				102B145680F704E50D89835B /* CuteCatApp.swift in Sources */,
@@ -212,7 +251,15 @@
 				39C55214FCF73EA7285A1DE0 /* ModelDownloadService.swift in Sources */,
 				2D87A7856EFA02BC4823EC1C /* PetModels.swift in Sources */,
 				BBB9BEB4FA017C79168346C9 /* PetStore.swift in Sources */,
+				9D9BB2A47A62D07627375CA2 /* ShopView.swift in Sources */,
 				DBE0CF9CD0BBA5470D944F32 /* StatusView.swift in Sources */,
+				D4E5F6A7B8C9D0E1F2A1B2C3 /* EventView.swift in Sources */,
+				F1A2B3C4D5E6F7A8B9C0D1E2 /* SpeechService.swift in Sources */,
+				B3C4D5E6F7A8B9C0D1E2F3A4 /* WeatherService.swift in Sources */,
+				D5E6F7A8B9C0D1E2F3A4B5C6 /* SettingsView.swift in Sources */,
+				E7F8A9B0C1D2E3F4A5B6C7D8 /* EmbeddingSession.swift in Sources */,
+				A9B0C1D2E3F4A5B6C7D8E9FA /* CatMemoryStore.swift in Sources */,
+				1A2B3C4D5E6F7A8B9C0D1E2F /* CatProfileView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -225,6 +272,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = HHD879R6BU;
 				INFOPLIST_FILE = CuteCat/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -307,6 +355,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = HHD879R6BU;
 				INFOPLIST_FILE = CuteCat/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -400,7 +449,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		B41545F225C22A0E185C2B71 /* XCRemoteSwiftPackageReference "llama.swift" */ = {
+		B41545F225C22A0E185C2B71 /* XCRemoteSwiftPackageReference "llama" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mattt/llama.swift";
 			requirement = {
@@ -413,7 +462,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		F12569F840CAAC5BCBF29F17 /* LlamaSwift */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = B41545F225C22A0E185C2B71 /* XCRemoteSwiftPackageReference "llama.swift" */;
+			package = B41545F225C22A0E185C2B71 /* XCRemoteSwiftPackageReference "llama" */;
 			productName = LlamaSwift;
 		};
 /* End XCSwiftPackageProductDependency section */

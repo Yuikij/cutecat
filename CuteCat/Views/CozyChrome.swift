@@ -13,33 +13,143 @@ enum CozyPalette {
     static let sky = Color(red: 0.70, green: 0.82, blue: 0.92)
     static let card = Color(red: 1.0, green: 0.98, blue: 0.96)
     static let shadow = Color(red: 0.35, green: 0.22, blue: 0.25).opacity(0.06)
+
+    static var isNight: Bool {
+        let hour = Calendar.current.component(.hour, from: .now)
+        return hour >= 19 || hour < 6
+    }
+
+    static var cardAdaptive: Color {
+        isNight ? Color.white.opacity(0.08) : card.opacity(0.85)
+    }
+
+    static var shadowAdaptive: Color {
+        isNight ? Color.black.opacity(0.2) : shadow
+    }
+
+    static var textPrimary: Color {
+        isNight ? cream : plum
+    }
+
+    static var textSecondary: Color {
+        isNight ? cream.opacity(0.6) : wood
+    }
 }
 
 struct CozyBackground: View {
+    var weather: WeatherCondition = .clear
+
     var body: some View {
         let hour = Calendar.current.component(.hour, from: .now)
 
-        LinearGradient(
-            colors: gradientColors(for: hour),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        ZStack {
+            LinearGradient(
+                colors: gradientColors(for: hour, weather: weather),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            if !weather.particles.isEmpty {
+                WeatherParticleView(particles: weather.particles, isRain: weather == .rain)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
+        }
     }
 
-    private func gradientColors(for hour: Int) -> [Color] {
+    private func gradientColors(for hour: Int, weather: WeatherCondition) -> [Color] {
+        let base: [Color]
         switch hour {
         case 6..<10:
-            return [Color(red: 1.0, green: 0.92, blue: 0.82), CozyPalette.cream]
+            base = [Color(red: 1.0, green: 0.92, blue: 0.82), CozyPalette.cream]
         case 10..<16:
-            return [CozyPalette.sky.opacity(0.3), CozyPalette.cream]
+            base = [CozyPalette.sky.opacity(0.3), CozyPalette.cream]
         case 16..<19:
-            return [Color(red: 1.0, green: 0.85, blue: 0.72), CozyPalette.peach.opacity(0.4)]
+            base = [Color(red: 1.0, green: 0.85, blue: 0.72), CozyPalette.peach.opacity(0.4)]
         case 19..<22:
-            return [Color(red: 0.25, green: 0.22, blue: 0.35), Color(red: 0.18, green: 0.15, blue: 0.28)]
+            base = [Color(red: 0.25, green: 0.22, blue: 0.35), Color(red: 0.18, green: 0.15, blue: 0.28)]
         default:
-            return [Color(red: 0.12, green: 0.10, blue: 0.20), Color(red: 0.08, green: 0.06, blue: 0.14)]
+            base = [Color(red: 0.12, green: 0.10, blue: 0.20), Color(red: 0.08, green: 0.06, blue: 0.14)]
         }
+
+        switch weather {
+        case .rain:
+            return base.map { $0.opacity(0.85) }
+        case .fog:
+            return base.map { $0.opacity(0.7) }
+        case .snow:
+            return base.map { $0.opacity(0.9) }
+        default:
+            return base
+        }
+    }
+}
+
+struct WeatherParticleView: View {
+    let particles: [String]
+    let isRain: Bool
+
+    @State private var items: [ParticleItem] = []
+
+    struct ParticleItem: Identifiable {
+        let id = UUID()
+        var emoji: String
+        var x: CGFloat
+        var startY: CGFloat
+        var endY: CGFloat
+        var duration: Double
+        var delay: Double
+        var size: CGFloat
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                ForEach(items) { item in
+                    FallingParticle(item: item)
+                }
+            }
+            .onAppear {
+                generateParticles(in: geo.size)
+            }
+        }
+    }
+
+    private func generateParticles(in size: CGSize) {
+        let count = isRain ? 30 : 15
+        items = (0..<count).map { _ in
+            ParticleItem(
+                emoji: particles.randomElement() ?? "💧",
+                x: CGFloat.random(in: 0...size.width),
+                startY: CGFloat.random(in: -100 ... -20),
+                endY: size.height + 40,
+                duration: isRain ? Double.random(in: 1.0...2.0) : Double.random(in: 4.0...8.0),
+                delay: Double.random(in: 0...3),
+                size: CGFloat.random(in: 10...18)
+            )
+        }
+    }
+}
+
+struct FallingParticle: View {
+    let item: WeatherParticleView.ParticleItem
+    @State private var yOffset: CGFloat = 0
+
+    var body: some View {
+        Text(item.emoji)
+            .font(.system(size: item.size))
+            .position(x: item.x, y: item.startY + yOffset)
+            .opacity(0.6)
+            .onAppear {
+                withAnimation(
+                    .linear(duration: item.duration)
+                    .delay(item.delay)
+                    .repeatForever(autoreverses: false)
+                ) {
+                    yOffset = item.endY - item.startY
+                }
+            }
     }
 }
 
@@ -55,8 +165,8 @@ struct CozyPanel<Content: View>: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(CozyPalette.card.opacity(0.92))
-                    .shadow(color: CozyPalette.shadow, radius: 8, y: 4)
+                    .fill(CozyPalette.cardAdaptive)
+                    .shadow(color: CozyPalette.shadowAdaptive, radius: 8, y: 4)
             )
     }
 }
@@ -69,28 +179,29 @@ struct CozyActionButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundStyle(tint)
-                    .frame(width: 48, height: 48)
-                    .background(
-                        Circle()
-                            .fill(tint.opacity(0.12))
-                    )
-
-                Text(title)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(CozyPalette.plum)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(CozyPalette.card.opacity(0.85))
-                    .shadow(color: CozyPalette.shadow, radius: 4, y: 2)
-            )
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(tint)
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(tint.opacity(CozyPalette.isNight ? 0.15 : 0.08))
+                )
+                .overlay(
+                    Circle()
+                        .strokeBorder(tint.opacity(0.12), lineWidth: 0.5)
+                )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SoftPressStyle())
+        .accessibilityLabel(title)
+    }
+}
+
+struct SoftPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }

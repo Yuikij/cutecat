@@ -3,6 +3,7 @@ import Combine
 
 struct ChatView: View {
     @EnvironmentObject private var store: PetStore
+    @StateObject private var speech = SpeechService()
     @State private var draft = ""
     @State private var keyboardHeight: CGFloat = 0
     @FocusState private var isInputFocused: Bool
@@ -23,6 +24,14 @@ struct ChatView: View {
         .onReceive(keyboardHeightPublisher) { height in
             keyboardHeight = height
         }
+        .onChange(of: speech.transcript) { _, newValue in
+            draft = newValue
+        }
+        .onChange(of: store.pendingSpeak) { _, text in
+            guard let text, !text.isEmpty else { return }
+            store.pendingSpeak = nil
+            speech.speak(text, style: store.state.voiceStyle)
+        }
     }
 
     // MARK: - Navigation Bar
@@ -33,6 +42,16 @@ struct ChatView: View {
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(CozyPalette.plum)
             Spacer()
+
+            if speech.isSpeaking {
+                Button {
+                    speech.stopSpeaking()
+                } label: {
+                    Image(systemName: "speaker.slash.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(CozyPalette.wood)
+                }
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -99,6 +118,19 @@ struct ChatView: View {
             Divider().opacity(0.3)
 
             HStack(alignment: .bottom, spacing: 8) {
+                Button {
+                    if speech.isListening {
+                        speech.stopListening()
+                    } else {
+                        speech.startListening()
+                    }
+                } label: {
+                    Image(systemName: speech.isListening ? "mic.fill" : "mic")
+                        .font(.system(size: 20))
+                        .foregroundStyle(speech.isListening ? .red : CozyPalette.moss)
+                        .frame(width: 32, height: 32)
+                }
+
                 TextField("想说点什么…", text: $draft, axis: .vertical)
                     .lineLimit(1...4)
                     .focused($isInputFocused)
@@ -114,6 +146,7 @@ struct ChatView: View {
                     )
 
                 Button {
+                    speech.stopListening()
                     let currentDraft = draft
                     draft = ""
                     Task {
@@ -144,10 +177,6 @@ struct ChatView: View {
         HStack(spacing: 8) {
             Group {
                 switch store.modelRuntimeState {
-                case .downloading:
-                    ProgressView(value: store.modelDownloadProgress)
-                        .progressViewStyle(.circular)
-                        .tint(CozyPalette.moss)
                 case .loading:
                     ProgressView()
                         .tint(CozyPalette.moss)
@@ -165,10 +194,10 @@ struct ChatView: View {
 
             Spacer()
 
-            if store.hasBundledModel == false {
-                Button(downloadButtonTitle) {
+            if case .failed = store.modelRuntimeState {
+                Button("重试") {
                     Task {
-                        await store.redownloadModel()
+                        await store.reloadModel()
                     }
                 }
                 .font(.caption2.weight(.bold))
@@ -240,23 +269,12 @@ struct ChatView: View {
 
     private var modelStateLine: String {
         switch store.modelRuntimeState {
-        case .downloading:
-            store.hasDownloadProgress ? store.downloadProgressLabel : "灵魂正在苏醒…"
         case .loading:
-            "它在伸懒腰…"
+            "灵魂正在苏醒…"
         case .failed:
             "它今天有点困…"
         default:
             "猫咪还在沉睡中…"
-        }
-    }
-
-    private var downloadButtonTitle: String {
-        switch store.modelRuntimeState {
-        case .idle, .failed: "唤醒猫咪"
-        case .downloading: "苏醒中…"
-        case .loading: "快好了…"
-        case .ready: "再试一次"
         }
     }
 
