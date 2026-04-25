@@ -32,6 +32,7 @@ struct CuteCatApp: App {
                         store.tick()
                         store.checkDailyStreak()
                         Task {
+                            await store.checkDailyBondMoment()
                             await store.tryTriggerEvent()
                         }
                     }

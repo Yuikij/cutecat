@@ -2,14 +2,18 @@ import SwiftUI
 
 struct CatProfileView: View {
     @EnvironmentObject private var store: PetStore
+    @State private var showShareCard = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    bondSection
+                    personaReportSection
                     growthSection
                     streakSection
                     traitsSection
+                    diaryPreviewSection
                     titlesSection
                     treasuresSection
                 }
@@ -20,6 +24,154 @@ struct CatProfileView: View {
                 : Color(red: 0.96, green: 0.95, blue: 0.93))
             .navigationTitle("\(store.catName)的档案")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showShareCard) {
+                CatPersonaShareView()
+                    .environmentObject(store)
+            }
+        }
+    }
+
+    // MARK: - Bond
+
+    private var bondSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Text("🐾")
+                    .font(.system(size: 34))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(store.state.bondTitle)
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(CozyPalette.textPrimary)
+                    Text(store.state.bondSubtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(CozyPalette.textSecondary)
+                }
+
+                Spacer()
+            }
+
+            Text(store.state.shareablePersonaLine)
+                .font(.caption)
+                .foregroundStyle(CozyPalette.textSecondary)
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(CozyPalette.moss.opacity(0.1))
+                )
+
+            HStack(spacing: 10) {
+                bondStat("观察", "\(store.state.observationCount)")
+                bondStat("陪伴", "\(store.state.comfortCount)")
+                bondStat("日记", "\(store.state.diaryEntries.count)")
+            }
+        }
+        .profileCard()
+    }
+
+    private func bondStat(_ label: String, _ value: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.title3.weight(.bold))
+                .foregroundStyle(CozyPalette.textPrimary)
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(CozyPalette.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Persona Report
+
+    private var personaReportSection: some View {
+        let report = store.state.personaReport
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Text("🧬")
+                    .font(.system(size: 34))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("16猫格测试")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(CozyPalette.textSecondary)
+                    Text("\(report.code) \(report.name)")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(CozyPalette.textPrimary)
+                    Text(report.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(CozyPalette.textSecondary)
+                }
+
+                Spacer()
+            }
+
+            VStack(spacing: 8) {
+                personaAxis("社交性", value: report.social, left: "独处", right: "主动")
+                personaAxis("安全感", value: report.security, left: "防备", right: "信任")
+                personaAxis("混乱度", value: report.chaos, left: "稳定", right: "离谱")
+                personaAxis("亲密度", value: report.affection, left: "疏离", right: "贴贴")
+            }
+
+            Text(report.shareLine)
+                .font(.caption)
+                .foregroundStyle(CozyPalette.textSecondary)
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(CozyPalette.sky.opacity(0.14))
+                )
+
+            Button {
+                showShareCard = true
+            } label: {
+                Label("生成分享卡", systemImage: "square.and.arrow.up")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(CozyPalette.moss)
+                    )
+            }
+            .buttonStyle(SoftPressStyle())
+        }
+        .profileCard()
+    }
+
+    private func personaAxis(_ label: String, value: Int, left: String, right: String) -> some View {
+        VStack(spacing: 4) {
+            HStack {
+                Text(label)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(CozyPalette.textPrimary)
+                Spacer()
+                Text("\(value)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(CozyPalette.textSecondary)
+            }
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(CozyPalette.wood.opacity(0.12))
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(CozyPalette.moss)
+                        .frame(width: geo.size.width * CGFloat(value) / 100.0)
+                }
+            }
+            .frame(height: 7)
+
+            HStack {
+                Text(left)
+                Spacer()
+                Text(right)
+            }
+            .font(.system(size: 9))
+            .foregroundStyle(CozyPalette.textSecondary.opacity(0.65))
         }
     }
 
@@ -246,6 +398,42 @@ struct CatProfileView: View {
         }
     }
 
+    // MARK: - Diary Preview
+
+    private var diaryPreviewSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("📓 猫日记")
+                    .font(.headline)
+                Spacer()
+                Text("\(store.state.diaryEntries.count)条")
+                    .font(.caption)
+                    .foregroundStyle(CozyPalette.textSecondary)
+            }
+
+            if let diary = store.state.diaryEntries.first {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("\(diary.mood.emoji) \(diary.mood.title)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(CozyPalette.moss)
+                    Text(diary.text)
+                        .font(.subheadline)
+                        .foregroundStyle(CozyPalette.textPrimary)
+                    Text(diary.trigger)
+                        .font(.caption2)
+                        .foregroundStyle(CozyPalette.textSecondary.opacity(0.7))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Text("还没有日记。陪它过一天，它会开始留下自己的小记录。")
+                    .font(.caption)
+                    .foregroundStyle(CozyPalette.textSecondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .profileCard()
+    }
+
     // MARK: - Titles
 
     private var titlesSection: some View {
@@ -362,6 +550,275 @@ struct CatProfileView: View {
         case .common: .gray
         case .rare: .purple
         case .legendary: .orange
+        }
+    }
+}
+
+struct CatDiaryView: View {
+    @EnvironmentObject private var store: PetStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 14) {
+                    personaCard
+
+                    if store.state.diaryEntries.isEmpty {
+                        emptyDiary
+                    } else {
+                        ForEach(store.state.diaryEntries) { entry in
+                            diaryCard(entry)
+                        }
+                    }
+                }
+                .padding()
+            }
+            .background(CozyPalette.isNight
+                ? Color(red: 0.08, green: 0.06, blue: 0.14)
+                : Color(red: 0.96, green: 0.95, blue: 0.93))
+            .navigationTitle("猫日记")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("完成") { dismiss() }
+                        .foregroundStyle(CozyPalette.moss)
+                }
+            }
+        }
+    }
+
+    private var personaCard: some View {
+        let report = store.state.personaReport
+
+        VStack(alignment: .leading, spacing: 8) {
+            Text("今日猫格")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(CozyPalette.textSecondary)
+
+            Text("\(report.code) \(report.name)")
+                .font(.title2.weight(.bold))
+                .foregroundStyle(CozyPalette.textPrimary)
+
+            Text(report.subtitle)
+                .font(.subheadline)
+                .foregroundStyle(CozyPalette.textSecondary)
+
+            Text(report.shareLine)
+                .font(.caption)
+                .foregroundStyle(CozyPalette.textSecondary)
+                .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .profileCard()
+    }
+
+    private var emptyDiary: some View {
+        VStack(spacing: 10) {
+            Text("🌙")
+                .font(.system(size: 46))
+            Text("它还没有开始写日记")
+                .font(.headline)
+                .foregroundStyle(CozyPalette.textPrimary)
+            Text("观察、陪伴，或者明天再打开，它会慢慢留下只属于你们的记录。")
+                .font(.subheadline)
+                .foregroundStyle(CozyPalette.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .profileCard()
+    }
+
+    private func diaryCard(_ entry: CatDiaryEntry) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("\(entry.mood.emoji) \(entry.mood.title)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(CozyPalette.moss)
+                Spacer()
+                Text(entry.createdAt, style: .date)
+                    .font(.caption2)
+                    .foregroundStyle(CozyPalette.textSecondary.opacity(0.7))
+            }
+
+            Text(entry.text)
+                .font(.body)
+                .foregroundStyle(CozyPalette.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("来自：\(entry.trigger)")
+                .font(.caption2)
+                .foregroundStyle(CozyPalette.textSecondary.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .profileCard()
+    }
+}
+
+struct CatPersonaShareView: View {
+    @EnvironmentObject private var store: PetStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                CozyBackground(weather: .clear)
+
+                ScrollView {
+                    VStack(spacing: 18) {
+                        shareCard
+                        Text("长按或截图分享你的猫格报告")
+                            .font(.caption)
+                            .foregroundStyle(CozyPalette.textSecondary)
+                    }
+                    .padding()
+                }
+            }
+            .navigationTitle("分享卡")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("完成") { dismiss() }
+                        .foregroundStyle(CozyPalette.moss)
+                }
+            }
+        }
+    }
+
+    private var shareCard: some View {
+        let report = store.state.personaReport
+        let scene = store.state.currentLifeScene
+
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("16猫格报告")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.78))
+                    Text(store.catName)
+                        .font(.title.weight(.black))
+                        .foregroundStyle(.white)
+                }
+                Spacer()
+                Text(scene.emoji)
+                    .font(.system(size: 46))
+                    .frame(width: 62, height: 62)
+                    .background(Circle().fill(.white.opacity(0.16)))
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(LinearGradient(
+                        colors: [
+                            CozyPalette.plum,
+                            CozyPalette.rose,
+                            CozyPalette.moss,
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+            )
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(report.code)
+                    .font(.system(size: 50, weight: .black, design: .rounded))
+                    .foregroundStyle(CozyPalette.plum)
+                Text(report.name)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(CozyPalette.textPrimary)
+                Text(report.subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(CozyPalette.textSecondary)
+            }
+            .padding(.horizontal, 2)
+
+            VStack(spacing: 10) {
+                shareAxis("社交性", value: report.social, left: "独处", right: "主动")
+                shareAxis("安全感", value: report.security, left: "防备", right: "信任")
+                shareAxis("混乱度", value: report.chaos, left: "稳定", right: "离谱")
+                shareAxis("亲密度", value: report.affection, left: "疏离", right: "贴贴")
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("代表行为")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(CozyPalette.textSecondary)
+                Text(store.state.signatureBehavior)
+                    .font(.headline)
+                    .foregroundStyle(CozyPalette.textPrimary)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(CozyPalette.moss.opacity(0.1))
+            )
+
+            if let diary = store.state.diaryEntries.first {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("今日猫日记")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(CozyPalette.textSecondary)
+                    Text("“\(diary.text)”")
+                        .font(.subheadline)
+                        .foregroundStyle(CozyPalette.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(CozyPalette.sky.opacity(0.14))
+                )
+            }
+
+            HStack {
+                Text("CuteCat")
+                    .font(.caption.weight(.bold))
+                Spacer()
+                Text("我养出来的，不是抽到的")
+                    .font(.caption)
+            }
+            .foregroundStyle(CozyPalette.textSecondary.opacity(0.75))
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(CozyPalette.isNight
+                    ? Color(red: 0.16, green: 0.14, blue: 0.24)
+                    : Color.white.opacity(0.92))
+                .shadow(color: CozyPalette.shadowAdaptive, radius: 14, y: 8)
+        )
+    }
+
+    private func shareAxis(_ label: String, value: Int, left: String, right: String) -> some View {
+        VStack(spacing: 5) {
+            HStack {
+                Text(label)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(CozyPalette.textPrimary)
+                Spacer()
+                Text("\(value)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(CozyPalette.textSecondary)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(CozyPalette.wood.opacity(0.12))
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(CozyPalette.moss)
+                        .frame(width: geo.size.width * CGFloat(value) / 100.0)
+                }
+            }
+            .frame(height: 9)
+            HStack {
+                Text(left)
+                Spacer()
+                Text(right)
+            }
+            .font(.system(size: 9))
+            .foregroundStyle(CozyPalette.textSecondary.opacity(0.65))
         }
     }
 }

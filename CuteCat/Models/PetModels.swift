@@ -122,6 +122,52 @@ struct MemoryRecord: Identifiable, Codable, Hashable, Sendable {
     let sourceType: MemorySourceType
 }
 
+// MARK: - Diary & Bond
+
+enum CatDiaryMood: String, Codable, Sendable {
+    case warm
+    case lonely
+    case playful
+    case guarded
+    case chaotic
+
+    var emoji: String {
+        switch self {
+        case .warm: "🫶"
+        case .lonely: "🌙"
+        case .playful: "🧶"
+        case .guarded: "🛡️"
+        case .chaotic: "🌀"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .warm: "贴近"
+        case .lonely: "想念"
+        case .playful: "玩心"
+        case .guarded: "防备"
+        case .chaotic: "离谱"
+        }
+    }
+}
+
+struct CatDiaryEntry: Identifiable, Codable, Hashable, Sendable {
+    let id: UUID
+    let text: String
+    let mood: CatDiaryMood
+    let createdAt: Date
+    let trigger: String
+
+    init(id: UUID = UUID(), text: String, mood: CatDiaryMood, createdAt: Date = .now, trigger: String) {
+        self.id = id
+        self.text = text
+        self.mood = mood
+        self.createdAt = createdAt
+        self.trigger = trigger
+    }
+}
+
 enum MemoryNodeType: String, Codable, Sendable {
     case event
     case chat
@@ -192,6 +238,78 @@ struct CatEvent: Identifiable, Codable, Sendable {
         self.title = title
         self.desc = desc
         self.choices = choices
+    }
+}
+
+// MARK: - Behavior
+
+enum CatBehaviorKind: String, Codable, Sendable {
+    case idle
+    case waiting
+    case hiding
+    case searchingFood
+    case napping
+    case grooming
+    case investigating
+    case guardingBelly
+    case writingDiary
+    case showingOff
+    case sulking
+    case plotting
+    case leaving
+
+    var displayMood: CatMood {
+        switch self {
+        case .idle: .neutral
+        case .waiting: .shy
+        case .hiding: .sad
+        case .searchingFood: .hungry
+        case .napping: .sleeping
+        case .grooming: .bathing
+        case .investigating: .thinking
+        case .guardingBelly: .disciplined
+        case .writingDiary: .thinking
+        case .showingOff: .happy
+        case .sulking: .sad
+        case .plotting: .thinking
+        case .leaving: .sad
+        }
+    }
+
+    var emoji: String {
+        switch self {
+        case .idle: "🐾"
+        case .waiting: "🫶"
+        case .hiding: "📦"
+        case .searchingFood: "🍽️"
+        case .napping: "🌙"
+        case .grooming: "🫧"
+        case .investigating: "🔍"
+        case .guardingBelly: "🛡️"
+        case .writingDiary: "📓"
+        case .showingOff: "✨"
+        case .sulking: "😾"
+        case .plotting: "🧊"
+        case .leaving: "🚪"
+        }
+    }
+}
+
+struct CatBehavior: Codable, Hashable, Sendable {
+    var kind: CatBehaviorKind
+    var title: String
+    var detail: String
+    var startedAt: Date
+    var intensity: Int
+
+    static func initial(now: Date = .now) -> CatBehavior {
+        CatBehavior(
+            kind: .idle,
+            title: "小日子",
+            detail: "小猫正在过自己的小日子。",
+            startedAt: now,
+            intensity: 1
+        )
     }
 }
 
@@ -379,7 +497,7 @@ enum TitleDefinition: String, CaseIterable {
     case collector       // 收藏家
     case earlyBird       // 早起的猫
     case nightOwl        // 夜猫子
-    case shopaholic      // 购物狂
+    case shopaholic      // 日记收藏家
 
     var name: String {
         switch self {
@@ -392,7 +510,7 @@ enum TitleDefinition: String, CaseIterable {
         case .collector: "收藏家"
         case .earlyBird: "早起的猫"
         case .nightOwl: "夜猫子"
-        case .shopaholic: "购物狂"
+        case .shopaholic: "日记收藏家"
         }
     }
 
@@ -407,7 +525,7 @@ enum TitleDefinition: String, CaseIterable {
         case .collector: "💎"
         case .earlyBird: "🌅"
         case .nightOwl: "🦉"
-        case .shopaholic: "🛍️"
+        case .shopaholic: "📓"
         }
     }
 
@@ -422,7 +540,7 @@ enum TitleDefinition: String, CaseIterable {
         case .collector: "收集5个宝物"
         case .earlyBird: "早上6-8点互动"
         case .nightOwl: "凌晨0-4点互动"
-        case .shopaholic: "在小卖部购买10次"
+        case .shopaholic: "留下10条猫日记"
         }
     }
 }
@@ -761,6 +879,11 @@ struct PetState: Codable, Sendable {
     var totalShopBuys: Int
     var totalEvents: Int
     var reviveCount: Int
+    var observationCount: Int
+    var comfortCount: Int
+    var diaryEntries: [CatDiaryEntry]
+    var lastDiaryDate: String
+    var currentBehavior: CatBehavior
 
     var localModelFileName: String?
     var localModelDisplayName: String?
@@ -813,6 +936,11 @@ struct PetState: Codable, Sendable {
             totalShopBuys: 0,
             totalEvents: 0,
             reviveCount: 0,
+            observationCount: 0,
+            comfortCount: 0,
+            diaryEntries: [],
+            lastDiaryDate: "",
+            currentBehavior: .initial(now: now),
             localModelFileName: nil,
             localModelDisplayName: nil
         )
@@ -826,6 +954,8 @@ extension PetState {
         case lastTickAt, lastEventAt, interactions, chatMessages, memories, inventoryItems
         case titles, streak, traitScore, treasures
         case totalShopBuys, totalEvents, reviveCount
+        case observationCount, comfortCount, diaryEntries, lastDiaryDate
+        case currentBehavior
         case localModelFileName, localModelDisplayName
     }
 
@@ -855,7 +985,179 @@ extension PetState {
         totalShopBuys = try c.decodeIfPresent(Int.self, forKey: .totalShopBuys) ?? 0
         totalEvents = try c.decodeIfPresent(Int.self, forKey: .totalEvents) ?? 0
         reviveCount = try c.decodeIfPresent(Int.self, forKey: .reviveCount) ?? 0
+        observationCount = try c.decodeIfPresent(Int.self, forKey: .observationCount) ?? 0
+        comfortCount = try c.decodeIfPresent(Int.self, forKey: .comfortCount) ?? 0
+        diaryEntries = try c.decodeIfPresent([CatDiaryEntry].self, forKey: .diaryEntries) ?? []
+        lastDiaryDate = try c.decodeIfPresent(String.self, forKey: .lastDiaryDate) ?? ""
+        currentBehavior = try c.decodeIfPresent(CatBehavior.self, forKey: .currentBehavior) ?? .initial()
         localModelFileName = try c.decodeIfPresent(String.self, forKey: .localModelFileName)
         localModelDisplayName = try c.decodeIfPresent(String.self, forKey: .localModelDisplayName)
+    }
+}
+
+extension PetState {
+    struct CatPersonaReport: Sendable {
+        let code: String
+        let name: String
+        let subtitle: String
+        let social: Int
+        let security: Int
+        let chaos: Int
+        let affection: Int
+
+        var shareLine: String {
+            "我的猫是\(code)「\(name)」：\(subtitle)"
+        }
+    }
+
+    struct CatLifeScene: Sendable {
+        let emoji: String
+        let title: String
+        let text: String
+    }
+
+    var bondTitle: String {
+        let traits = Set(activeTraits)
+        if affinity >= 80 && comfortCount >= 5 { return "灵魂贴贴型" }
+        if traits.contains(.clingy) { return "粘人棉花糖型" }
+        if traits.contains(.tsundere) { return "口嫌体正直型" }
+        if traits.contains(.curious) { return "到处乱闻型" }
+        if traits.contains(.glutton) { return "饭碗守护型" }
+        if traits.contains(.edgelord) { return "深夜放空型" }
+        if traits.contains(.chuuni) { return "封印右爪型" }
+        if observationCount >= 6 { return "慢慢信任型" }
+        return "刚搬进你心里型"
+    }
+
+    var bondSubtitle: String {
+        if affinity >= 80 {
+            return "它已经把你当成安全屋了。"
+        }
+        if affinity >= 60 {
+            return "它会嘴硬，但身体会靠近。"
+        }
+        if affinity >= 40 {
+            return "它开始记得你的习惯。"
+        }
+        if affinity >= 20 {
+            return "它还在试探你会不会留下。"
+        }
+        return "它需要更稳定的陪伴。"
+    }
+
+    var shareablePersonaLine: String {
+        "我的猫是\(bondTitle)，好感\(affinity)/100，代表行为：\(signatureBehavior)"
+    }
+
+    var signatureBehavior: String {
+        let traits = Set(activeTraits)
+        if traits.contains(.clingy) { return "听见你来就假装没等你" }
+        if traits.contains(.tsundere) { return "边嫌弃边把尾巴靠过来" }
+        if traits.contains(.curious) { return "把每件东西都当成宇宙谜题" }
+        if traits.contains(.glutton) { return "把爱意翻译成能不能吃" }
+        if traits.contains(.edgelord) { return "在角落里思考猫生虚无" }
+        if traits.contains(.chuuni) { return "宣布右爪正在封印世界" }
+        if comfortCount > observationCount { return "难过时会安静贴近" }
+        if observationCount > 4 { return "被看见时会多停留一秒" }
+        return "偷偷观察你有没有回来"
+    }
+
+    var personaReport: CatPersonaReport {
+        let ts = traitScore
+        let traits = Set(activeTraits)
+
+        let social = clampPersonaAxis(
+            30 + ts.chatCount * 4 + ts.touchCount * 3 + comfortCount * 5 - ts.idleTicks
+        )
+        let security = clampPersonaAxis(
+            affinity + comfortCount * 4 + observationCount * 2 - ts.disciplineCount * 8 - reviveCount * 10
+        )
+        let chaos = clampPersonaAxis(
+            ts.eventCount * 7 + ts.playCount * 4 + ts.disciplineCount * 6 +
+            (traits.contains(.chuuni) ? 18 : 0) + (traits.contains(.curious) ? 12 : 0)
+        )
+        let affection = clampPersonaAxis(
+            affinity / 2 + ts.touchCount * 5 + comfortCount * 6 + ts.feedCount * 2 -
+            (traits.contains(.edgelord) ? 12 : 0)
+        )
+
+        let socialCode = social >= 50 ? "E" : "I"
+        let securityCode = security >= 50 ? "S" : "G"
+        let chaosCode = chaos >= 50 ? "C" : "R"
+        let affectionCode = affection >= 50 ? "A" : "D"
+        let code = socialCode + securityCode + chaosCode + affectionCode
+
+        let identity = personaIdentity(code: code)
+        return CatPersonaReport(
+            code: code,
+            name: identity.name,
+            subtitle: identity.subtitle,
+            social: social,
+            security: security,
+            chaos: chaos,
+            affection: affection
+        )
+    }
+
+    var currentLifeScene: CatLifeScene {
+        if isDead {
+            return CatLifeScene(emoji: "🪦", title: "长睡", text: "\(catName)安静地睡着了。")
+        }
+
+        let behavior = currentBehavior
+        if !behavior.detail.isEmpty {
+            return CatLifeScene(emoji: behavior.kind.emoji, title: behavior.title, text: behavior.detail)
+        }
+
+        if health <= 2 {
+            return CatLifeScene(emoji: "💊", title: "缩成一团", text: "\(catName)今天不太舒服，连尾巴都懒得管。")
+        }
+        if hunger >= 8 {
+            return CatLifeScene(emoji: "🍽️", title: "搜寻食物", text: "\(catName)正盯着空气里的鱼味看。")
+        }
+        if energy <= 2 {
+            return CatLifeScene(emoji: "🌙", title: "低电量", text: "\(catName)把自己折成一小团，假装世界不存在。")
+        }
+        if cleanliness <= 2 {
+            return CatLifeScene(emoji: "🫧", title: "嫌弃自己", text: "\(catName)正在认真舔毛，表情像在审判整个房间。")
+        }
+        if traits.contains(.clingy) && affinity >= 35 {
+            return CatLifeScene(emoji: "🫶", title: "偷偷靠近", text: "\(catName)在你看不见的时候偷偷靠近了一点。")
+        }
+        if traits.contains(.curious) {
+            return CatLifeScene(emoji: "🔍", title: "调查世界", text: "\(catName)正在研究一个不存在的宇宙按钮。")
+        }
+        if traits.contains(.tsundere) {
+            return CatLifeScene(emoji: "😤", title: "嘴硬待机", text: "\(catName)背对着你，但耳朵一直在偷听。")
+        }
+        if traits.contains(.edgelord) {
+            return CatLifeScene(emoji: "🌑", title: "深夜放空", text: "\(catName)蹲在角落里，像一小块会呼吸的阴影。")
+        }
+        return CatLifeScene(emoji: "🐾", title: "小日子", text: "\(catName)正在过自己的小日子。")
+    }
+
+    private func clampPersonaAxis(_ value: Int) -> Int {
+        max(0, min(100, value))
+    }
+
+    private func personaIdentity(code: String) -> (name: String, subtitle: String) {
+        switch code {
+        case "ESCA": return ("太阳纸箱暴君", "热闹、信任、离谱，还会主动把爱藏进纸箱。")
+        case "ESCD": return ("快乐混乱路人", "很会自嗨，但亲密这件事还要看心情。")
+        case "ESRA": return ("稳定贴贴小面包", "安全感很足，喜欢规律地靠近你。")
+        case "ESRD": return ("礼貌路过猫", "愿意待在你身边，但不急着交出肚皮。")
+        case "EGCA": return ("嘴硬烟花猫", "外表热闹，内心防备，喜欢用离谱掩饰在意。")
+        case "EGCD": return ("叛逆小旋风", "越靠近越要装酷，情绪像没拧紧的汽水。")
+        case "EGRA": return ("试探型小太阳", "想靠近，但每一步都要先确认安全。")
+        case "EGRD": return ("社交防御大师", "会出现，会互动，但心门暂时只开一条缝。")
+        case "ISCA": return ("梦游收藏家", "安静、信任、脑洞大，喜欢把奇怪东西当宝物。")
+        case "ISCD": return ("独处发明家", "很安全，但更爱自己琢磨世界。")
+        case "ISRA": return ("被窝守护灵", "慢热、稳定、柔软，是很适合一起安静待着的猫。")
+        case "ISRD": return ("安静租客", "习惯这里了，但仍保留自己的小边界。")
+        case "IGCA": return ("阴影小恶魔", "防备又在意，越喜欢越会绕远路。")
+        case "IGCD": return ("月下叛逃者", "不太信任世界，但很会给自己加戏。")
+        case "IGRA": return ("慢热月光猫", "很慢很慢地靠近，一旦信任就很珍贵。")
+        default: return ("角落观察员", "安静、防备、慢热，还在判断你会不会留下。")
+        }
     }
 }

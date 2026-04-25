@@ -5,9 +5,9 @@ struct HomeView: View {
     @StateObject private var speech = SpeechService()
     @State private var showChat = false
     @State private var showStatus = false
-    @State private var showShop = false
     @State private var showSettings = false
     @State private var showProfile = false
+    @State private var showDiary = false
 
     var body: some View {
         ZStack {
@@ -73,6 +73,12 @@ struct HomeView: View {
                 if let banner = store.streakBanner {
                     notificationBanner(text: banner, color: .orange)
                 }
+                if let diary = store.diaryBanner {
+                    notificationBanner(text: "\(diary.mood.emoji) 新猫日记：\(diary.text)", color: .pink)
+                }
+                if let banner = store.bondChangeBanner {
+                    notificationBanner(text: banner, color: CozyPalette.moss)
+                }
                 if let title = store.newTitleBanner {
                     notificationBanner(text: "\(title.emoji) 解锁称号「\(title.name)」！", color: .purple)
                 }
@@ -87,15 +93,13 @@ struct HomeView: View {
             .padding(.top, 60)
             .animation(.spring(response: 0.4), value: store.growthBanner)
             .animation(.spring(response: 0.4), value: store.streakBanner)
+            .animation(.spring(response: 0.4), value: store.diaryBanner?.id)
+            .animation(.spring(response: 0.4), value: store.bondChangeBanner)
             .animation(.spring(response: 0.4), value: store.newTitleBanner?.id)
             .animation(.spring(response: 0.4), value: store.newTreasureBanner?.id)
         }
         .sheet(isPresented: $showChat) {
             ChatView()
-                .environmentObject(store)
-        }
-        .sheet(isPresented: $showShop) {
-            ShopView()
                 .environmentObject(store)
         }
         .sheet(isPresented: $showSettings) {
@@ -104,6 +108,10 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showProfile) {
             CatProfileView()
+                .environmentObject(store)
+        }
+        .sheet(isPresented: $showDiary) {
+            CatDiaryView()
                 .environmentObject(store)
         }
         .animation(.easeInOut(duration: 0.3), value: showStatus)
@@ -125,6 +133,9 @@ struct HomeView: View {
             store.pendingSpeak = nil
             speech.speak(text, style: store.state.voiceStyle)
         }
+        .task {
+            await store.checkDailyBondMoment()
+        }
     }
 
     // MARK: - Header
@@ -142,6 +153,7 @@ struct HomeView: View {
                     if speech.isSpeaking {
                         headerIcon("speaker.slash.fill") { speech.stopSpeaking() }
                     }
+                    headerIcon("book.closed") { showDiary = true }
                     headerIcon("gearshape") { showSettings = true }
                     headerIcon("trophy") { showProfile = true }
                     headerIcon(showStatus ? "chart.bar.fill" : "chart.bar") { showStatus.toggle() }
@@ -165,6 +177,9 @@ struct HomeView: View {
 
                     statusPill(moodWeather.icon)
                 }
+
+                firstLookCard
+                    .padding(.top, 8)
 
                 Spacer()
             }
@@ -200,6 +215,49 @@ struct HomeView: View {
             .padding(.trailing, 4)
     }
 
+    private var firstLookCard: some View {
+        let report = store.state.personaReport
+        let scene = store.state.currentLifeScene
+
+        return Button {
+            showProfile = true
+        } label: {
+            HStack(spacing: 10) {
+                Text(scene.emoji)
+                    .font(.title2)
+                    .frame(width: 34, height: 34)
+                    .background(
+                        Circle().fill(headerTextColor.opacity(0.06))
+                    )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(report.code) \(report.name)")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(headerTextColor)
+                        .lineLimit(1)
+                    Text("\(scene.title) · \(store.state.signatureBehavior)")
+                        .font(.caption2)
+                        .foregroundStyle(headerSubtextColor)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Image(systemName: "sparkles")
+                    .font(.caption)
+                    .foregroundStyle(headerSubtextColor.opacity(0.8))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(CozyPalette.cardAdaptive)
+                    .shadow(color: CozyPalette.shadowAdaptive, radius: 3, y: 1)
+            )
+        }
+        .buttonStyle(SoftPressStyle())
+    }
+
     // MARK: - Cat Display
 
     private var catArea: some View {
@@ -217,7 +275,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private var chatBubble: some View {
-        let text = store.actionStatusText ?? store.state.comment
+        let text = store.actionStatusText ?? store.lifePulseText
         if !text.isEmpty {
             MarqueeChatBubble(text: text)
                 .frame(maxWidth: 320)
@@ -377,14 +435,14 @@ struct HomeView: View {
             CozyActionButton(title: "清洁", icon: "shower.fill", tint: CozyPalette.sky) {
                 Task { await store.performInteraction(.clean) }
             }
-            CozyActionButton(title: "管教", icon: "hand.raised.fill", tint: CozyPalette.wood) {
-                Task { await store.performInteraction(.discipline) }
+            CozyActionButton(title: "观察", icon: "eye.fill", tint: CozyPalette.wood) {
+                Task { await store.observeCat() }
             }
             CozyActionButton(title: "看病", icon: "cross.case.fill", tint: CozyPalette.rose) {
                 Task { await store.performInteraction(.medical) }
             }
-            CozyActionButton(title: "小卖部", icon: "storefront.fill", tint: .purple) {
-                showShop = true
+            CozyActionButton(title: "陪伴", icon: "heart.circle.fill", tint: .purple) {
+                Task { await store.comfortCat() }
             }
         }
         .padding(.horizontal, 16)
