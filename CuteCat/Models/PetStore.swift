@@ -1,6 +1,39 @@
 import Foundation
 import SwiftUI
 
+enum CatContextActionCommand: Hashable {
+    case interaction(Interaction)
+    case observe
+    case comfort
+    case giveSpace
+}
+
+struct CatContextAction: Identifiable {
+    let id: String
+    let title: String
+    let icon: String
+    let tint: Color
+    let command: CatContextActionCommand
+}
+
+struct CareInsight {
+    let icon: String
+    let title: String
+    let detail: String
+    let tint: Color
+}
+
+private extension Interaction {
+    var isIntrusive: Bool {
+        switch self {
+        case .play, .clean, .discipline, .headpat, .belly, .cuddle:
+            true
+        case .feed, .medical, .chat:
+            false
+        }
+    }
+}
+
 @MainActor
 final class PetStore: ObservableObject {
     @Published private(set) var state: PetState
@@ -13,7 +46,6 @@ final class PetStore: ObservableObject {
 
     @Published var pendingEvent: CatEvent?
     @Published var eventResult: String?
-    @Published var pendingSpeak: String?
     @Published var catMoodWord: String?
     @Published var diaryBanner: CatDiaryEntry?
     @Published var bondChangeBanner: String?
@@ -78,8 +110,8 @@ final class PetStore: ObservableObject {
     // MARK: - Computed Properties
 
     var currentMood: CatMood {
-        if state.isDead { return .dead }
-        displayMood ?? state.currentBehavior.kind.displayMood
+        if state.isDead { return .away }
+        return displayMood ?? state.currentBehavior.kind.displayMood
     }
 
     var canSendChat: Bool {
@@ -105,6 +137,190 @@ final class PetStore: ObservableObject {
         return "\(scene.emoji) \(scene.text)"
     }
 
+    var careInsight: CareInsight {
+        if state.isDead {
+            return CareInsight(
+                icon: "moon.stars.fill",
+                title: "躲起来了",
+                detail: "不要重开，慢慢叫它回来。关系低谷需要耐心，不需要惩罚。",
+                tint: CozyPalette.wood
+            )
+        }
+        if state.health <= 2 {
+            return CareInsight(
+                icon: "cross.case.fill",
+                title: "需要照顾身体",
+                detail: "先看病，再陪它安静恢复；这时候玩闹收益很低。",
+                tint: CozyPalette.rose
+            )
+        }
+        if state.currentBehavior.kind == .guardingBelly || state.currentBehavior.kind == .sulking {
+            return CareInsight(
+                icon: "hand.raised.fill",
+                title: "它在守边界",
+                detail: "尊重一次，比强行靠近更容易让关系往前走。",
+                tint: CozyPalette.wood
+            )
+        }
+        if state.currentBehavior.kind == .hiding {
+            return CareInsight(
+                icon: "eye.slash.fill",
+                title: "它需要安全感",
+                detail: "距离、低声、食物都可以；别急着证明亲密。",
+                tint: CozyPalette.wood
+            )
+        }
+        if state.currentBehavior.kind == .writingDiary {
+            return CareInsight(
+                icon: "book.closed.fill",
+                title: "它在整理心事",
+                detail: "偷看会变成记忆，不偷看也会变成记忆。",
+                tint: CozyPalette.moss
+            )
+        }
+        if state.hunger >= 8 {
+            return CareInsight(
+                icon: "fork.knife",
+                title: "它真的饿了",
+                detail: "先处理饭碗，后面的亲密才会更自然。",
+                tint: .orange
+            )
+        }
+        if state.energy <= 2 {
+            return CareInsight(
+                icon: "moon.fill",
+                title: "低电量",
+                detail: "安静陪伴会比玩耍更有用。",
+                tint: CozyPalette.wood
+            )
+        }
+        if state.cleanliness <= 2 {
+            return CareInsight(
+                icon: "sparkles",
+                title: "它有点嫌弃自己",
+                detail: "清洁能改善状态，但太粗暴也会被记一笔。",
+                tint: CozyPalette.sky
+            )
+        }
+        if state.affinity < 25 {
+            return CareInsight(
+                icon: "pawprint.fill",
+                title: "还在试探你",
+                detail: "观察和稳定出现，比高频互动更能建立信任。",
+                tint: CozyPalette.wood
+            )
+        }
+        if state.affinity >= 70 {
+            return CareInsight(
+                icon: "heart.fill",
+                title: "关系很稳",
+                detail: "它会接受更多亲近，但仍然有自己的小脾气。",
+                tint: CozyPalette.moss
+            )
+        }
+        return CareInsight(
+            icon: "leaf.fill",
+            title: "一起过小日子",
+            detail: "跟着它现在做的事选择，不用每次都把状态拉满。",
+            tint: CozyPalette.moss
+        )
+    }
+
+    var contextualActions: [CatContextAction] {
+        guard state.isDead == false else { return [] }
+
+        if state.health <= 2 {
+            return [
+                makeAction("看病", "cross.case.fill", CozyPalette.rose, .interaction(.medical)),
+                makeAction("陪着", "heart.circle.fill", .purple, .comfort),
+                makeAction("看看", "eye.fill", CozyPalette.wood, .observe),
+            ]
+        }
+
+        if state.hunger >= 8 || state.currentBehavior.kind == .searchingFood {
+            return [
+                makeAction("喂点吃的", "fork.knife", .orange, .interaction(.feed)),
+                makeAction("陪它找找", "magnifyingglass", CozyPalette.wood, .observe),
+                makeAction("先等一下", "hourglass", CozyPalette.wood, .giveSpace),
+            ]
+        }
+
+        if state.energy <= 2 || state.currentBehavior.kind == .napping {
+            return [
+                makeAction("不打扰", "moon.fill", CozyPalette.wood, .giveSpace),
+                makeAction("轻轻陪着", "heart.circle.fill", .purple, .comfort),
+                makeAction("整理一下", "shower.fill", CozyPalette.sky, .interaction(.clean)),
+            ]
+        }
+
+        if state.cleanliness <= 2 || state.currentBehavior.kind == .grooming {
+            return [
+                makeAction("帮它清洁", "shower.fill", CozyPalette.sky, .interaction(.clean)),
+                makeAction("假装没看", "eye.slash.fill", CozyPalette.wood, .giveSpace),
+                makeAction("给点吃的", "fork.knife", .orange, .interaction(.feed)),
+            ]
+        }
+
+        switch state.currentBehavior.kind {
+        case .hiding:
+            return [
+                makeAction("留点距离", "eye.slash.fill", CozyPalette.wood, .giveSpace),
+                makeAction("放低声音", "heart.circle.fill", .purple, .comfort),
+                makeAction("拿食物哄", "fork.knife", .orange, .interaction(.feed)),
+            ]
+        case .guardingBelly, .sulking:
+            return [
+                makeAction("尊重边界", "hand.raised.fill", CozyPalette.wood, .giveSpace),
+                makeAction("摸摸头", "hand.point.up.fill", CozyPalette.moss, .interaction(.headpat)),
+                makeAction("冒险摸肚", "pawprint.fill", CozyPalette.rose, .interaction(.belly)),
+            ]
+        case .investigating, .plotting:
+            return [
+                makeAction("一起研究", "magnifyingglass", CozyPalette.wood, .observe),
+                makeAction("逗它玩", "gamecontroller.fill", CozyPalette.moss, .interaction(.play)),
+                makeAction("突然抱抱", "heart.fill", .purple, .interaction(.cuddle)),
+            ]
+        case .writingDiary:
+            return [
+                makeAction("偷偷观察", "eye.fill", CozyPalette.wood, .observe),
+                makeAction("不偷看", "eye.slash.fill", CozyPalette.wood, .giveSpace),
+                makeAction("摸摸头", "hand.point.up.fill", CozyPalette.moss, .interaction(.headpat)),
+            ]
+        case .waiting:
+            return [
+                makeAction("靠近一点", "heart.fill", .purple, .interaction(.cuddle)),
+                makeAction("摸摸头", "hand.point.up.fill", CozyPalette.moss, .interaction(.headpat)),
+                makeAction("陪它玩", "gamecontroller.fill", CozyPalette.moss, .interaction(.play)),
+            ]
+        case .showingOff:
+            return [
+                makeAction("认真看", "eye.fill", CozyPalette.wood, .observe),
+                makeAction("陪它演", "gamecontroller.fill", CozyPalette.moss, .interaction(.play)),
+                makeAction("夸夸它", "heart.circle.fill", .purple, .comfort),
+            ]
+        default:
+            if state.activeTraits.contains(.clingy) {
+                return [
+                    makeAction("抱一下", "heart.fill", .purple, .interaction(.cuddle)),
+                    makeAction("摸摸头", "hand.point.up.fill", CozyPalette.moss, .interaction(.headpat)),
+                    makeAction("陪它玩", "gamecontroller.fill", CozyPalette.moss, .interaction(.play)),
+                ]
+            }
+            if state.activeTraits.contains(.curious) {
+                return [
+                    makeAction("观察它", "eye.fill", CozyPalette.wood, .observe),
+                    makeAction("丢玩具", "gamecontroller.fill", CozyPalette.moss, .interaction(.play)),
+                    makeAction("给点吃的", "fork.knife", .orange, .interaction(.feed)),
+                ]
+            }
+            return [
+                makeAction("观察", "eye.fill", CozyPalette.wood, .observe),
+                makeAction("喂食", "fork.knife", .orange, .interaction(.feed)),
+                makeAction("玩一会儿", "gamecontroller.fill", CozyPalette.moss, .interaction(.play)),
+            ]
+        }
+    }
+
     func renameCat(_ name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -112,20 +328,30 @@ final class PetStore: ObservableObject {
         save()
     }
 
-    func setVoiceStyle(_ style: VoiceStyle) {
-        state.voiceStyle = style
-        save()
+    private func makeAction(
+        _ title: String,
+        _ icon: String,
+        _ tint: Color,
+        _ command: CatContextActionCommand
+    ) -> CatContextAction {
+        CatContextAction(
+            id: "\(title)-\(icon)",
+            title: title,
+            icon: icon,
+            tint: tint,
+            command: command
+        )
     }
 
     // MARK: - Bond Loop
 
     func checkDailyBondMoment() async {
         guard state.isDead == false else { return }
-        guard state.lastDiaryDate != DailyStreak.todayString else { return }
+        guard state.lastDiaryDate != DayKey.todayString else { return }
 
         let mood = diaryMoodForCurrentState()
         let seed = dailyDiarySeed()
-        state.lastDiaryDate = DailyStreak.todayString
+        state.lastDiaryDate = DayKey.todayString
         setBehavior(.writingDiary, title: "写日记", detail: "\(state.catName)把今天折成一句很短的话，藏进日记里。", intensity: 2)
         await appendDiary(trigger: "今日醒来", mood: mood, fallback: seed)
         adjustAffinity(1)
@@ -207,6 +433,49 @@ final class PetStore: ObservableObject {
         save()
     }
 
+    func giveCatSpace() async {
+        guard state.isDead == false else { return }
+        guard isGeneratingReply == false else { return }
+
+        state.observationCount += 1
+
+        let boundaryMatters = state.currentBehavior.kind == .hiding ||
+            state.currentBehavior.kind == .guardingBelly ||
+            state.currentBehavior.kind == .sulking ||
+            state.currentBehavior.kind == .writingDiary ||
+            state.affinity < 35
+
+        if boundaryMatters {
+            state.happiness = min(10, state.happiness + 1)
+            state.energy = min(10, state.energy + 1)
+            adjustAffinity(state.affinity < 35 ? 3 : 2)
+        } else {
+            adjustAffinity(1)
+        }
+
+        let text = spaceLine(boundaryMatters: boundaryMatters)
+        setBehavior(
+            boundaryMatters ? .waiting : .idle,
+            title: boundaryMatters ? "边界被尊重" : "安静同处",
+            detail: text,
+            intensity: boundaryMatters ? 2 : 1
+        )
+        recordInteraction(.chat, emoji: "🤫", comment: text)
+        addMemory("主人没有打扰\(state.catName)：\(text)", source: .interaction, poignancy: boundaryMatters ? 7 : 4)
+        showTemporaryStatus(mood: boundaryMatters ? .shy : .thinking, text: text, emoji: "🤫")
+
+        if boundaryMatters && (state.observationCount == 1 || state.observationCount % 4 == 0) {
+            await appendDiary(
+                trigger: "边界被尊重",
+                mood: .warm,
+                fallback: "主人今天没有硬把我抱出来。我把这件事记在很里面的地方。"
+            )
+        }
+
+        checkAchievements()
+        save()
+    }
+
     private func appendDiary(trigger: String, mood: CatDiaryMood, fallback: String) async {
         let text: String
         if modelRuntimeState == .ready && isGeneratingReply == false {
@@ -253,8 +522,8 @@ final class PetStore: ObservableObject {
     }
 
     private func dailyDiarySeed() -> String {
-        if state.streak.currentStreak >= 3 {
-            return "主人又回来了。连续几天都是这样。我开始有点相信门会被推开。"
+        if state.comfortCount >= 3 || state.observationCount >= 3 {
+            return "主人又回来了。我没有马上过去，但耳朵先替我相信了一点。"
         }
         if state.hunger >= 8 {
             return "今天醒来第一件事：想吃。第二件事：继续想吃。"
@@ -334,6 +603,29 @@ final class PetStore: ObservableObject {
             return "\(state.catName)把额头轻轻抵过来，这是它的小小信任。"
         }
         return "\(state.catName)安静了一会儿，呼吸慢慢变软。"
+    }
+
+    private func spaceLine(boundaryMatters: Bool) -> String {
+        if boundaryMatters {
+            if state.currentBehavior.kind == .writingDiary {
+                return "\(state.catName)用爪子压住日记本，确认你没有偷看后，耳朵松了一点。"
+            }
+            if state.activeTraits.contains(.tsundere) {
+                return "\(state.catName)背对着你哼了一声，但尾巴尖没有再躲远。"
+            }
+            if state.activeTraits.contains(.edgelord) {
+                return "\(state.catName)仍在角落里，但把影子旁边的位置留给了你。"
+            }
+            return "\(state.catName)发现你没有逼近，慢慢把自己从紧绷里放出来一点。"
+        }
+
+        if state.activeTraits.contains(.curious) {
+            return "\(state.catName)把安静也当成玩具，偷偷研究你为什么不动。"
+        }
+        if state.affinity >= 60 {
+            return "\(state.catName)和你待在同一片安静里，像这也是一种贴近。"
+        }
+        return "\(state.catName)没有被催促，只是在你附近继续过自己的小日子。"
     }
 
     private func diaryPrompt(trigger: String, fallback: String) -> String {
@@ -465,7 +757,7 @@ final class PetStore: ObservableObject {
 
     private func refreshBehaviorFromState(reason: String = "") {
         guard state.isDead == false else {
-            setBehavior(.idle, title: "长睡", detail: "\(state.catName)安静地睡着了。")
+            setBehavior(.hiding, title: "躲起来了", detail: "\(state.catName)躲到了很深的地方，只露出一点点尾巴。", intensity: 5)
             return
         }
 
@@ -497,6 +789,12 @@ final class PetStore: ObservableObject {
     func performInteraction(_ interaction: Interaction) async {
         guard state.isDead == false else { return }
         guard isGeneratingReply == false else { return }
+        if maybeApplyInteractionFatigue(interaction) {
+            return
+        }
+        if maybeRejectIntrusiveInteraction(interaction) {
+            return
+        }
 
         switch interaction {
         case .feed:
@@ -523,8 +821,138 @@ final class PetStore: ObservableObject {
             else if interaction == .belly { await handleBelly() }
             else { await handleCuddle() }
         }
-        maybeDropTreasure()
         checkAchievements()
+    }
+
+    private func maybeApplyInteractionFatigue(_ interaction: Interaction) -> Bool {
+        guard interaction != .medical else { return false }
+
+        let recentSame = state.interactions
+            .suffix(8)
+            .filter {
+                $0.interaction == interaction &&
+                Date.now.timeIntervalSince($0.createdAt) < 150
+            }
+            .count
+        guard recentSame >= 2 else { return false }
+
+        if interaction == .feed && state.hunger >= 7 { return false }
+
+        let text = fatigueLine(for: interaction)
+        if interaction.isIntrusive {
+            state.happiness = max(0, state.happiness - 1)
+            adjustAffinity(-1)
+        }
+        recordInteraction(interaction, emoji: "⏳", comment: text)
+        setBehavior(.sulking, title: "有点腻了", detail: text, intensity: 3)
+        addMemory("主人连续做了很多次\(interaction.title)，\(state.catName)有点腻了：\(text)", source: .interaction, poignancy: 5)
+        showTemporaryStatus(mood: interaction.isIntrusive ? .sad : .thinking, text: text, emoji: "⏳")
+        save()
+        return true
+    }
+
+    private func fatigueLine(for interaction: Interaction) -> String {
+        switch interaction {
+        case .feed:
+            return "\(state.catName)闻了闻饭碗，表示爱不是把食物塞成小山。"
+        case .play:
+            return "\(state.catName)把玩具按住了：同一套把戏今天已经看穿。"
+        case .clean:
+            return "\(state.catName)后退半步，觉得自己不是一条毛巾。"
+        case .discipline:
+            return "\(state.catName)安静下来，但眼神把这件事折进了小本子。"
+        case .chat:
+            return "\(state.catName)眨了眨眼，像是暂时把人类语言放到一边。"
+        case .headpat:
+            return "\(state.catName)歪头躲开一点：喜欢也不能一直摸同一个地方。"
+        case .belly:
+            return "\(state.catName)把肚子收起来，明确表示那里不是公共区域。"
+        case .cuddle:
+            return "\(state.catName)轻轻推开你，想把亲密留到下一会儿。"
+        case .medical:
+            return "\(state.catName)配合完检查，决定今天到此为止。"
+        }
+    }
+
+    private func maybeRejectIntrusiveInteraction(_ interaction: Interaction) -> Bool {
+        guard interaction.isIntrusive else { return false }
+        guard state.affinity < 85 else { return false }
+
+        let behavior = state.currentBehavior.kind
+        let isSensitiveMoment = behavior == .hiding ||
+            behavior == .guardingBelly ||
+            behavior == .sulking ||
+            behavior == .napping ||
+            behavior == .writingDiary
+        guard isSensitiveMoment else { return false }
+
+        var resistance = 35
+        if behavior == .guardingBelly { resistance += 18 }
+        if behavior == .hiding || behavior == .sulking { resistance += 14 }
+        if behavior == .writingDiary { resistance += 10 }
+        if state.activeTraits.contains(.tsundere) { resistance += 10 }
+        if state.activeTraits.contains(.edgelord) { resistance += 8 }
+        if state.activeTraits.contains(.clingy) { resistance -= 12 }
+        if state.affinity >= 55 { resistance -= 18 }
+        if state.affinity < 25 { resistance += 10 }
+        if interaction == .belly { resistance += 18 }
+        if interaction == .clean && state.cleanliness <= 2 { resistance -= 20 }
+
+        let rejected = Int.random(in: 0..<100) < max(10, min(80, resistance))
+        guard rejected else { return false }
+
+        applyIntrusionRejection(interaction)
+        return true
+    }
+
+    private func applyIntrusionRejection(_ interaction: Interaction) {
+        let interruptedTitle = state.currentBehavior.title
+
+        switch interaction {
+        case .play:
+            state.traitScore.playCount += 1
+        case .clean:
+            state.traitScore.cleanCount += 1
+        case .discipline:
+            state.traitScore.disciplineCount += 1
+        case .medical:
+            state.traitScore.medicalCount += 1
+        case .headpat, .belly, .cuddle:
+            state.traitScore.touchCount += 1
+        case .feed:
+            state.traitScore.feedCount += 1
+        case .chat:
+            state.traitScore.chatCount += 1
+        }
+
+        let text = intrusionRejectionLine(interaction)
+        state.happiness = max(0, state.happiness - 1)
+        adjustAffinity(interaction == .belly ? -2 : -1)
+        setBehavior(.sulking, title: "被打扰了", detail: text, intensity: 4)
+        recordInteraction(interaction, emoji: "…", comment: text)
+        addMemory("主人在\(interruptedTitle)时打扰了\(state.catName)：\(text)", source: .interaction, poignancy: 7)
+        showTemporaryStatus(mood: .sad, text: text, emoji: "…")
+        checkAchievements()
+        save()
+    }
+
+    private func intrusionRejectionLine(_ interaction: Interaction) -> String {
+        if state.currentBehavior.kind == .writingDiary {
+            return "\(state.catName)啪地合上日记本，今天暂时不想让你靠太近。"
+        }
+        if state.currentBehavior.kind == .napping {
+            return "\(state.catName)困得把脸埋起来，只伸出尾巴尖表示抗议。"
+        }
+        if interaction == .belly {
+            return "\(state.catName)立刻护住肚子：这里还不是你的领地。"
+        }
+        if state.activeTraits.contains(.tsundere) {
+            return "\(state.catName)往旁边挪了一点，小声说：现在不准。"
+        }
+        if state.activeTraits.contains(.edgelord) {
+            return "\(state.catName)缩回阴影里，像把门从里面轻轻关上。"
+        }
+        return "\(state.catName)没有生气，只是把距离重新摆回了自己舒服的位置。"
     }
 
     private func handleFeed() async {
@@ -870,6 +1298,7 @@ final class PetStore: ObservableObject {
         state.chatMessages.append(
             PetChatMessage(id: UUID(), role: .user, text: trimmed, createdAt: .now)
         )
+        state.traitScore.chatCount += 1
         trimChatHistory()
         adjustAffinity(1)
         save()
@@ -918,7 +1347,6 @@ final class PetStore: ObservableObject {
                 PetChatMessage(id: UUID(), role: .pet, text: reply, createdAt: .now)
             )
             state.comment = reply
-            pendingSpeak = reply
             trimChatHistory()
             consolidateMemoryIfNeeded()
             save()
@@ -948,218 +1376,6 @@ final class PetStore: ObservableObject {
         }
 
         isGeneratingReply = false
-    }
-
-    // MARK: - Shop & Inventory
-
-    var inventory: [ShopItem] {
-        state.inventoryItems
-    }
-
-    func generateShopItems() async -> [ShopItem]? {
-        guard modelRuntimeState == .ready else { return nil }
-
-        let prompt = shopPrompt()
-        let userMsg = "开门营业"
-        print("🏪 [Shop] System Prompt:\n\(prompt)")
-        print("🏪 [Shop] User Message: \(userMsg)")
-
-        do {
-            let reply = try await llamaSession.generateInteractionReply(
-                systemPrompt: prompt,
-                userMessage: userMsg,
-                maxTokens: 256,
-                temperature: 1.2
-            )
-            print("🏪 [Shop] LLM Raw Output:\n\(reply)")
-
-            let items = parseShopJSON(reply)
-            if let items {
-                print("🏪 [Shop] Parsed \(items.count) items: \(items.map { "\($0.emoji)\($0.name)" })")
-            } else {
-                print("🏪 [Shop] Parse FAILED — showing 打烊了")
-            }
-            return items
-        } catch {
-            print("🏪 [Shop] LLM Error: \(error)")
-            return nil
-        }
-    }
-
-    func buyItem(_ item: ShopItem) {
-        state.inventoryItems.append(item)
-        state.totalShopBuys += 1
-        if state.inventoryItems.count > 20 {
-            state.inventoryItems.removeFirst()
-        }
-        checkAchievements()
-        save()
-    }
-
-    func feedItemToCat(_ item: ShopItem) async {
-        state.inventoryItems.removeAll { $0.id == item.id }
-
-        if modelRuntimeState == .ready {
-            isGeneratingReply = true
-            showTemporaryStatus(mood: .eating, text: nil, emoji: item.emoji)
-
-            do {
-                let reply = try await llamaSession.generateInteractionReply(
-                    systemPrompt: feedItemPrompt(item),
-                    userMessage: "给猫咪喂\(item.emoji)\(item.name)",
-                    maxTokens: 120,
-                    temperature: 1.1
-                )
-
-                let parsed = parseFeedItemEffect(reply, item: item)
-                state.hunger = max(0, min(10, state.hunger + parsed.hungerDelta))
-                state.happiness = max(0, min(10, state.happiness + parsed.happinessDelta))
-                state.energy = max(0, min(10, state.energy + parsed.energyDelta))
-                state.health = max(0, min(state.growthStage.maxHealth, state.health + parsed.healthDelta))
-                adjustAffinity(parsed.affinityDelta)
-                recordInteraction(.feed, emoji: item.emoji, comment: parsed.comment)
-                addMemory("猫咪吃了\(item.name)：\(parsed.comment)", source: .interaction, poignancy: 6)
-                showTemporaryStatus(mood: parsed.mood, text: parsed.comment, emoji: item.emoji)
-            } catch {
-                applyDefaultFeedItem(item)
-            }
-            isGeneratingReply = false
-        } else {
-            applyDefaultFeedItem(item)
-        }
-
-        state.traitScore.feedCount += 1
-        maybeDropTreasure()
-        checkAchievements()
-        save()
-    }
-
-    private func applyDefaultFeedItem(_ item: ShopItem) {
-        state.hunger = max(0, state.hunger - Int.random(in: 2...4))
-        state.happiness = min(10, state.happiness + 1)
-        adjustAffinity(2)
-        let comment = "猫咪吃了\(item.emoji)\(item.name)，看起来很满足！"
-        recordInteraction(.feed, emoji: item.emoji, comment: comment)
-        addMemory("猫咪吃了\(item.name)", source: .interaction, poignancy: 5)
-        showTemporaryStatus(mood: .eating, text: comment, emoji: item.emoji)
-    }
-
-    private func feedItemPrompt(_ item: ShopItem) -> String {
-        """
-        你是猫猫\(state.catName)。\(traitHint) 主人给你喂了：\(item.emoji)\(item.name)（\(item.desc)）。
-        用JSON回复你的反应：
-        {"comment":"你说的话，纯对话1-2句，禁止括号动作描写","mood":"eating/happy/sick/excited","hunger":-2,"happiness":1,"energy":0,"health":0,"affinity":2}
-        hunger/happiness/energy/health/affinity是增减值(-3到3)。只返回JSON。
-        """
-    }
-
-    private struct FeedItemEffect {
-        let comment: String
-        let mood: CatMood
-        let hungerDelta: Int
-        let happinessDelta: Int
-        let energyDelta: Int
-        let healthDelta: Int
-        let affinityDelta: Int
-    }
-
-    private func parseFeedItemEffect(_ text: String, item: ShopItem) -> FeedItemEffect {
-        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let start = cleaned.firstIndex(of: "{"),
-           let end = cleaned.lastIndex(of: "}") {
-            cleaned = String(cleaned[start...end])
-        }
-
-        guard let data = cleaned.data(using: .utf8) else {
-            return defaultFeedEffect(item)
-        }
-
-        struct RawEffect: Decodable {
-            let comment: String?
-            let mood: String?
-            let hunger: Int?
-            let happiness: Int?
-            let energy: Int?
-            let health: Int?
-            let affinity: Int?
-        }
-
-        guard let raw = try? JSONDecoder().decode(RawEffect.self, from: data),
-              let comment = raw.comment, !comment.isEmpty else {
-            return defaultFeedEffect(item)
-        }
-
-        let parsedMood: CatMood = switch raw.mood {
-        case "happy": .happy
-        case "sick": .sick
-        case "excited": .happy
-        default: .eating
-        }
-
-        return FeedItemEffect(
-            comment: comment,
-            mood: parsedMood,
-            hungerDelta: clampDelta(raw.hunger ?? -2),
-            happinessDelta: clampDelta(raw.happiness ?? 1),
-            energyDelta: clampDelta(raw.energy ?? 0),
-            healthDelta: clampDelta(raw.health ?? 0),
-            affinityDelta: clampDelta(raw.affinity ?? 2)
-        )
-    }
-
-    private func defaultFeedEffect(_ item: ShopItem) -> FeedItemEffect {
-        FeedItemEffect(
-            comment: "猫咪吃了\(item.emoji)\(item.name)，看起来很满足！",
-            mood: .eating,
-            hungerDelta: -Int.random(in: 2...4),
-            happinessDelta: 1,
-            energyDelta: 0,
-            healthDelta: 0,
-            affinityDelta: 2
-        )
-    }
-
-    private func clampDelta(_ v: Int) -> Int { max(-3, min(3, v)) }
-
-    private func shopPrompt() -> String {
-        """
-        你是一个奇怪的小卖部老板，卖各种奇怪的猫咪食物。
-        生成3个商品，用JSON数组返回。每个商品有name、emoji、desc字段。
-        只返回JSON，不要其他文字。示例：
-        [{"name":"星星饼干","emoji":"⭐","desc":"吃了会发光"}]
-        """
-    }
-
-    private func parseShopJSON(_ text: String) -> [ShopItem]? {
-        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if let start = cleaned.firstIndex(of: "["),
-           let end = cleaned.lastIndex(of: "]") {
-            cleaned = String(cleaned[start...end])
-        }
-
-        guard let data = cleaned.data(using: .utf8) else { return nil }
-
-        struct RawItem: Decodable {
-            let name: String?
-            let emoji: String?
-            let desc: String?
-        }
-
-        guard let rawItems = try? JSONDecoder().decode([RawItem].self, from: data) else {
-            return nil
-        }
-
-        let items = rawItems.compactMap { raw -> ShopItem? in
-            guard let name = raw.name, name.isEmpty == false else { return nil }
-            return ShopItem(
-                name: name,
-                emoji: raw.emoji ?? "🎁",
-                desc: raw.desc ?? "神秘的东西"
-            )
-        }
-
-        return items.isEmpty ? nil : items
     }
 
     // MARK: - Random Events
@@ -1207,10 +1423,18 @@ final class PetStore: ObservableObject {
 
         addMemory("随机事件「\(pendingEvent?.title ?? "")」：选了\(choice.label)→\(choice.result)", source: .event, poignancy: 8)
         setBehavior(.showingOff, title: choice.label, detail: choice.result, intensity: 3)
+        let resultText = "\(pendingEvent?.emoji ?? "🐾") \(choice.result)"
+        eventResult = resultText
 
-        maybeDropTreasure()
         checkAchievements()
         save()
+
+        Task {
+            try? await Task.sleep(for: .seconds(8))
+            if eventResult == resultText {
+                eventResult = nil
+            }
+        }
     }
 
     func dismissEvent() {
@@ -1221,7 +1445,9 @@ final class PetStore: ObservableObject {
 
     func clearEvent() {
         pendingEvent = nil
-        refreshBehaviorFromState(reason: "event-cleared")
+        if eventResult == nil {
+            refreshBehaviorFromState(reason: "event-cleared")
+        }
         save()
     }
 
@@ -1461,8 +1687,8 @@ final class PetStore: ObservableObject {
 
         if state.happiness <= 0 && state.health <= 0 && state.hunger >= 10 {
             state.isDead = true
-            state.comment = "猫咪永远地睡着了…"
-            setBehavior(.idle, title: "长睡", detail: "猫咪永远地睡着了…", intensity: 5)
+            state.comment = "\(state.catName)躲起来了。它还在附近，只是现在不想回应。"
+            setBehavior(.hiding, title: "躲起来了", detail: "\(state.catName)躲到了很深的地方，只露出一点点尾巴。", intensity: 5)
         } else {
             refreshBehaviorFromState(reason: "tick")
         }
@@ -1475,26 +1701,178 @@ final class PetStore: ObservableObject {
         tick(now: now)
 
         guard state.isDead == false else { return }
-        guard modelRuntimeState == .ready else { return }
+        await nudgeAutonomousMoment(force: true)
+        await refreshMoodWord()
+    }
+
+    func nudgeAutonomousMoment(force: Bool = false) async {
+        guard state.isDead == false else { return }
+        guard pendingEvent == nil else { return }
         guard isGeneratingReply == false else { return }
         guard actionStatusText == nil else { return }
 
-        isGeneratingReply = true
+        let behaviorAge = Date.now.timeIntervalSince(state.currentBehavior.startedAt)
+        if force == false {
+            guard behaviorAge >= 90 else { return }
+            guard Int.random(in: 0..<100) < 45 else { return }
+        }
 
-        do {
-            let reply = try await llamaSession.generateInteractionReply(
-                systemPrompt: tickPrompt(),
-                userMessage: "描述一下猫咪现在的状态"
-            )
-            if reply.isEmpty == false {
-                state.comment = reply
-                save()
+        let seed = autonomousMomentSeed()
+        let detail: String
+
+        if modelRuntimeState == .ready {
+            isGeneratingReply = true
+            do {
+                let reply = try await llamaSession.generateInteractionReply(
+                    systemPrompt: autonomousMomentPrompt(seed: seed),
+                    userMessage: "让猫自己做一件小事",
+                    maxTokens: 72,
+                    temperature: 1.25
+                )
+                detail = cleanAutonomousLine(reply, fallback: seed.detail)
+            } catch {
+                detail = seed.detail
             }
-        } catch {}
+            isGeneratingReply = false
+        } else {
+            detail = seed.detail
+        }
 
-        isGeneratingReply = false
+        setBehavior(seed.kind, title: seed.title, detail: detail, intensity: seed.intensity)
+        state.comment = detail
+        addMemory("\(state.catName)自己做了件小事：\(detail)", source: .tick, poignancy: seed.poignancy)
+        save()
+    }
 
-        await refreshMoodWord()
+    private struct AutonomousMomentSeed {
+        let kind: CatBehaviorKind
+        let title: String
+        let detail: String
+        let intensity: Int
+        let poignancy: Int
+    }
+
+    private func autonomousMomentSeed() -> AutonomousMomentSeed {
+        let traits = Set(state.activeTraits)
+
+        if state.health <= 2 {
+            return AutonomousMomentSeed(
+                kind: .hiding,
+                title: "低声休息",
+                detail: "\(state.catName)把自己收进角落，偶尔抬眼确认你还在。",
+                intensity: 5,
+                poignancy: 7
+            )
+        }
+        if state.hunger >= 8 {
+            return AutonomousMomentSeed(
+                kind: .searchingFood,
+                title: "寻找食物",
+                detail: "\(state.catName)绕着饭碗走了三圈，像在举行一场严肃的召唤仪式。",
+                intensity: 4,
+                poignancy: 5
+            )
+        }
+        if state.energy <= 2 {
+            return AutonomousMomentSeed(
+                kind: .napping,
+                title: "半梦半醒",
+                detail: "\(state.catName)睡到一半伸出一只爪子，好像梦里也在找你。",
+                intensity: 3,
+                poignancy: 5
+            )
+        }
+        if state.cleanliness <= 2 {
+            return AutonomousMomentSeed(
+                kind: .grooming,
+                title: "嫌弃自己",
+                detail: "\(state.catName)认真舔毛，表情像刚刚发现世界不够干净。",
+                intensity: 3,
+                poignancy: 4
+            )
+        }
+        if traits.contains(.clingy) && state.affinity >= 35 {
+            return AutonomousMomentSeed(
+                kind: .waiting,
+                title: "偷偷等你",
+                detail: "\(state.catName)坐在你常出现的地方，假装自己只是路过。",
+                intensity: 2,
+                poignancy: 7
+            )
+        }
+        if traits.contains(.tsundere) && state.affinity < 75 {
+            return AutonomousMomentSeed(
+                kind: .guardingBelly,
+                title: "嘴硬待机",
+                detail: "\(state.catName)背对着你整理尾巴，但耳朵一直朝你这边转。",
+                intensity: 2,
+                poignancy: 6
+            )
+        }
+        if traits.contains(.curious) {
+            return AutonomousMomentSeed(
+                kind: .investigating,
+                title: "调查世界",
+                detail: "\(state.catName)盯着墙角看了很久，仿佛那里刚刚通过一条秘密。",
+                intensity: 2,
+                poignancy: 5
+            )
+        }
+        if traits.contains(.edgelord) {
+            return AutonomousMomentSeed(
+                kind: .hiding,
+                title: "深夜放空",
+                detail: "\(state.catName)把影子当成被子，安静地盖在自己身上。",
+                intensity: 2,
+                poignancy: 6
+            )
+        }
+        if Bool.random() {
+            return AutonomousMomentSeed(
+                kind: .writingDiary,
+                title: "写小日记",
+                detail: "\(state.catName)用爪尖按着日记本，写下一个只有自己懂的句号。",
+                intensity: 2,
+                poignancy: 7
+            )
+        }
+        return AutonomousMomentSeed(
+            kind: .idle,
+            title: "小日子",
+            detail: "\(state.catName)在房间里慢慢走了一圈，确认这里还是它的小世界。",
+            intensity: 1,
+            poignancy: 4
+        )
+    }
+
+    private func autonomousMomentPrompt(seed: AutonomousMomentSeed) -> String {
+        """
+        你是住在手机里的猫猫\(state.catName)，不是AI助手。
+        任务：写一个“猫自己正在做什么”的可见小场景，中文1句，24-42字。
+        风格：具体、有代入感、有一点猫脑回路；不要解释，不要对话，不要括号动作描写。
+        小模型可以有一点怪，但必须像真实电子宠物在自己过日子。
+        当前状态：好感\(state.affinity)/100，心情\(state.happiness)/10，饥饿\(state.hunger)/10，精力\(state.energy)/10，清洁\(state.cleanliness)/10
+        当前猫格：\(state.bondTitle)，\(state.bondSubtitle)
+        场景方向：\(seed.title)
+        参考但不要照抄：\(seed.detail)
+        只输出场景正文。
+        """
+    }
+
+    private func cleanAutonomousLine(_ raw: String, fallback: String) -> String {
+        let line = raw
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: "\n")
+            .first
+            .map(String.init) ?? ""
+        let cleaned = line
+            .replacingOccurrences(of: "\"", with: "")
+            .replacingOccurrences(of: "“", with: "")
+            .replacingOccurrences(of: "”", with: "")
+        if cleaned.count < 8 || cleaned.count > 70 {
+            return fallback
+        }
+        return cleaned
     }
 
     private static let quoteChars = CharacterSet(charactersIn: "\"\u{201C}\u{201D}\u{300C}\u{300D}\u{3002}")
@@ -1524,9 +1902,9 @@ final class PetStore: ObservableObject {
         } catch {}
     }
 
-    // MARK: - Revival
+    // MARK: - Calling Back
 
-    func reviveCat() async {
+    func callCatBack() async {
         guard state.isDead else { return }
 
         state.isDead = false
@@ -1538,26 +1916,26 @@ final class PetStore: ObservableObject {
         state.lastTickAt = .now
         state.lastEventAt = .now
         state.reviveCount += 1
-        adjustAffinity(-30)
+        adjustAffinity(-8)
         checkAchievements()
 
         if modelRuntimeState == .ready {
             isGeneratingReply = true
             do {
                 let reply = try await llamaSession.generateInteractionReply(
-                    systemPrompt: "你是一只猫，刚刚从死亡中复活。描述你醒来的反应，1句中文，不超过25字。迷迷糊糊的。",
-                    userMessage: "猫咪复活了"
+                    systemPrompt: "你是一只猫，刚刚被主人从躲藏里慢慢叫回来。描述你回来时的反应，1句中文，不超过25字。别像任务奖励，要有一点别扭和依恋。",
+                    userMessage: "主人耐心地把猫咪叫回来了"
                 )
-                state.comment = reply.isEmpty ? "猫咪迷迷糊糊地睁开了眼睛…好像做了一场很长的梦。" : reply
+                state.comment = reply.isEmpty ? "\(state.catName)从暗处探出脑袋，装作只是路过。" : reply
             } catch {
-                state.comment = "猫咪迷迷糊糊地睁开了眼睛…好像做了一场很长的梦。"
+                state.comment = "\(state.catName)从暗处探出脑袋，装作只是路过。"
             }
             isGeneratingReply = false
         } else {
-            state.comment = "猫咪迷迷糊糊地睁开了眼睛…好像做了一场很长的梦。"
+            state.comment = "\(state.catName)从暗处探出脑袋，装作只是路过。"
         }
 
-        addMemory("猫咪死而复生了", source: .interaction, poignancy: 10)
+        addMemory("你把躲起来的\(state.catName)慢慢叫回来了", source: .interaction, poignancy: 10)
         save()
     }
 
@@ -1632,6 +2010,7 @@ final class PetStore: ObservableObject {
         你是\(state.catName)，住在手机里的猫猫。\(stageHint)不是AI助手。
         【核心性格】\(personalityBlock)
         成长阶段：\(stage.emoji)\(stage.name) 好感\(state.affinity)/100（\(state.affinityLevel.title)）心情\(state.happiness) 饱\(state.hunger) 精力\(state.energy)\(memoryContext)\(thoughtContext)
+        \(iconicLineDirective(context: "chat"))
         风格：1-2句中文，可长可短。性格要极端鲜明！每句话都要能看出你的性格。纯对话，禁止括号动作描写如（摇尾巴）（歪头），禁止第三人称旁白。禁止"喵呜/喵鸣"开头。可用emoji。每次说不一样的话。
         """
 
@@ -1664,42 +2043,91 @@ final class PetStore: ObservableObject {
         return traits.map(\.promptPersonality).joined(separator: " ")
     }
 
+    private func iconicLineDirective(context: String) -> String {
+        let traits = Set(state.activeTraits)
+        let roll = Int.random(in: 0..<100)
+        let isWarmContext = context == "feed" || context == "play" || context == "headpat" || context == "cuddle" || context == "chat"
+        let isBoundaryContext = context == "discipline" || context == "clean" || context == "bellyBite"
+        let stronglyAttached = state.affinity >= 70 || traits.contains(.clingy) || traits.contains(.babyface)
+        let guarded = state.affinity <= 35 || state.happiness <= 2 || traits.contains(.tsundere) || traits.contains(.edgelord) || traits.contains(.venomous)
+        let unhinged = traits.contains(.schemer) || traits.contains(.berserker) || traits.contains(.chuuni)
+
+        let mode: String
+        if isBoundaryContext && (guarded || roll < 72) {
+            mode = "coldBoundary"
+        } else if isWarmContext && stronglyAttached && roll < 48 {
+            mode = "possessiveLove"
+        } else if guarded && roll < 34 {
+            mode = "coldBoundary"
+        } else if unhinged && roll < 38 {
+            mode = "catLogic"
+        } else if traits.contains(.tsundere) && roll < 50 {
+            mode = "loveHate"
+        } else if roll < 16 {
+            mode = "catLogic"
+        } else {
+            mode = "ordinary"
+        }
+
+        let base = """
+        名场景能力：你可以输出强情绪、荒诞猫脑回路和反差台词，但必须像猫的即时真心话，不要解释设定，不要复述规则。
+        安全边界：可以把“冰箱、纸箱、口袋、床底、日记本、门口”等当作猫脑回路的夸张比喻；不要写真实伤害、血腥、囚禁教程或威胁行动。
+        原创要求：不要照抄任何示例句，不要模板化；每次都根据好感、心情、当前互动自己生成。
+        """
+
+        let modeRule: String
+        switch mode {
+        case "possessiveLove":
+            modeRule = "本轮倾向：过度喜欢。可以把喜欢写到荒诞占有欲，比如想把主人藏好、保存好、随身带走；语气可以甜、疯、认真。"
+        case "coldBoundary":
+            modeRule = "本轮倾向：冷处理或嫌弃。可以表达拒绝互动、拉开距离、把主人排除在自己的小世界外；要有猫式矛盾，不能像仇恨宣言。"
+        case "loveHate":
+            modeRule = "本轮倾向：又爱又嫌弃。前半句嘴硬讨厌，后半句露出离不开主人的破绽。"
+        case "catLogic":
+            modeRule = "本轮倾向：离谱猫逻辑。把抽象关系物化成一个家用物品或小仪式，让玩家觉得想截图。"
+        default:
+            modeRule = "本轮倾向：日常但有性格。不要强行名场景，除非情绪自然冲上来。"
+        }
+
+        return base + "\n" + modeRule
+    }
+
     private func feedPrompt() -> String {
-        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 主人喂你吃的。1-2句回应。\(speechRule)"
+        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 主人喂你吃的。\(iconicLineDirective(context: "feed")) 1-2句回应。\(speechRule)"
     }
 
     private func playPrompt() -> String {
-        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 主人找你玩。1-2句回应。\(speechRule)"
+        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 主人找你玩。\(iconicLineDirective(context: "play")) 1-2句回应。\(speechRule)"
     }
 
     private func cleanPrompt() -> String {
-        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 主人给你洗澡。1-2句回应。\(speechRule)"
+        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 主人给你洗澡。\(iconicLineDirective(context: "clean")) 1-2句回应。\(speechRule)"
     }
 
     private func disciplinePrompt() -> String {
-        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 被主人训了。1-2句回应。\(speechRule)"
+        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 被主人训了。\(iconicLineDirective(context: "discipline")) 1-2句回应。\(speechRule)"
     }
 
     private func medicalPrompt() -> String {
-        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 被带去看医生了。1-2句回应。\(speechRule)"
+        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 被带去看医生了。\(iconicLineDirective(context: "medical")) 1-2句回应。\(speechRule)"
     }
 
     private func headpatPrompt() -> String {
-        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 被摸头了。1-2句回应。\(speechRule)"
+        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 被摸头了。\(iconicLineDirective(context: "headpat")) 1-2句回应。\(speechRule)"
     }
 
     private func bellyPrompt(willBite: Bool) -> String {
         willBite
-            ? "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 肚子被摸触发攻击！1-2句凶狠回应。\(speechRule)"
-            : "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 肚子被摸了。1-2句回应。\(speechRule)"
+            ? "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 肚子被摸触发攻击！\(iconicLineDirective(context: "bellyBite")) 1-2句凶狠回应。\(speechRule)"
+            : "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 肚子被摸了。\(iconicLineDirective(context: "belly")) 1-2句回应。\(speechRule)"
     }
 
     private func cuddlePrompt() -> String {
-        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 主人对你撒娇。1-2句回应。\(speechRule)"
+        "你是猫猫\(state.catName)，好感\(state.affinity)/100。\(traitHint) 主人对你撒娇。\(iconicLineDirective(context: "cuddle")) 1-2句回应。\(speechRule)"
     }
 
     private func tickPrompt() -> String {
-        "你是猫猫\(state.catName)。\(traitHint) 说你现在在干嘛，1-2句中文。\(speechRule)"
+        "你是猫猫\(state.catName)。\(traitHint) 说你现在在干嘛，\(iconicLineDirective(context: "tick")) 1-2句中文。\(speechRule)"
     }
 
     private func moodWordPrompt() -> String {
@@ -1901,7 +2329,6 @@ final class PetStore: ObservableObject {
         displayMood = mood
         actionStatusText = text
         if let emoji { lastActionEmoji = emoji }
-        if let text { pendingSpeak = text }
 
         guard text != nil else { return }
 
@@ -1921,30 +2348,6 @@ final class PetStore: ObservableObject {
 
     private func extractEmoji(from text: String) -> String? {
         text.first { $0.unicodeScalars.allSatisfy { $0.properties.isEmoji && $0.value > 0x238C } }.map(String.init)
-    }
-
-    // MARK: - Daily Streak
-
-    @Published var streakBanner: String?
-
-    func checkDailyStreak() {
-        guard !state.streak.checkedInToday else { return }
-        state.streak.checkIn()
-
-        let reward = state.streak.streakReward
-        adjustAffinity(reward)
-        state.happiness = min(10, state.happiness + 1)
-
-        let day = state.streak.currentStreak
-        streakBanner = "🔥 连续签到第\(day)天！好感+\(reward)"
-
-        checkAchievements()
-        save()
-
-        Task {
-            try? await Task.sleep(for: .seconds(4))
-            streakBanner = nil
-        }
     }
 
     // MARK: - Achievements
@@ -1969,7 +2372,6 @@ final class PetStore: ObservableObject {
         if state.reviveCount >= 1 { tryUnlock(.survivor) }
         if state.affinity >= 80 { tryUnlock(.bestFriend) }
         if state.totalEvents >= 10 { tryUnlock(.adventurer) }
-        if state.treasures.count >= 5 { tryUnlock(.collector) }
         if state.diaryEntries.count >= 10 { tryUnlock(.shopaholic) }
 
         let hour = Calendar.current.component(.hour, from: .now)
@@ -1982,57 +2384,6 @@ final class PetStore: ObservableObject {
                 try? await Task.sleep(for: .seconds(4))
                 newTitleBanner = nil
             }
-        }
-    }
-
-    // MARK: - Treasures
-
-    @Published var newTreasureBanner: Treasure?
-
-    private static let treasurePool: [(String, String, TreasureRarity)] = [
-        ("毛线球", "🧶", .common),
-        ("小鱼干", "🐟", .common),
-        ("蝴蝶结", "🎀", .common),
-        ("铃铛", "🔔", .common),
-        ("神秘羽毛", "🪶", .common),
-        ("猫薄荷", "🌿", .common),
-        ("月光石", "🌙", .rare),
-        ("星星碎片", "⭐", .rare),
-        ("彩虹水晶", "🌈", .rare),
-        ("金鱼王冠", "👑", .rare),
-        ("龙之逆鳞", "🐉", .legendary),
-        ("时光沙漏", "⏳", .legendary),
-        ("九命项链", "📿", .legendary),
-    ]
-
-    private func maybeDropTreasure() {
-        let roll = Int.random(in: 0..<100)
-        var threshold = 25
-        if state.activeTraits.contains(.curious) { threshold += 15 }
-        if state.activeTraits.contains(.glutton) { threshold += 5 }
-        guard roll < threshold else { return }
-
-        let weighted = Self.treasurePool.flatMap { item -> [(String, String, TreasureRarity)] in
-            switch item.2 {
-            case .common: Array(repeating: item, count: 5)
-            case .rare: Array(repeating: item, count: 2)
-            case .legendary: [item]
-            }
-        }
-
-        guard let pick = weighted.randomElement() else { return }
-
-        let ownedNames = Set(state.treasures.map(\.name))
-        if ownedNames.contains(pick.0) && pick.2 != .common { return }
-
-        let treasure = Treasure(name: pick.0, emoji: pick.1, rarity: pick.2)
-        state.treasures.append(treasure)
-        newTreasureBanner = treasure
-        checkAchievements()
-
-        Task {
-            try? await Task.sleep(for: .seconds(4))
-            newTreasureBanner = nil
         }
     }
 

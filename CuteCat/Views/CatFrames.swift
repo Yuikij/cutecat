@@ -8,7 +8,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ^  == )
           )         (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -17,7 +17,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ^  == )
           )         (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~/
         """,
@@ -26,7 +26,7 @@ enum CatFrames {
           /  -   -  \\
          ( ==  ^  == )
           )         (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -35,7 +35,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ^  == )
           )    ~    (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
           \\~~     ~~
         """,
@@ -44,29 +44,29 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ^  == )
           )         (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
     ]
 
-    // MARK: - Happy (bouncy, tail wag, sparkle)
+    // MARK: - Happy (bouncy, tail wag)
     static let happy: [String] = [
         """
-           /\\_____/\\  ✨
+           /\\_____/\\  *
           /  ^   ^  \\
          ( ==  w  == )
           )  \\   /  (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
         """
-         ✨ /\\_____/\\
+         * /\\_____/\\
           /  ^   ^  \\
          ( ==  w  == )
           ) ~  _  ~ (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~/
         """,
@@ -75,7 +75,7 @@ enum CatFrames {
           /  ^   ^  \\  ♪
          ( ==  ω  == )
           )  \\   /  (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
           \\~~     ~~
         """,
@@ -84,7 +84,7 @@ enum CatFrames {
           /  ^   ^  \\
          ( ==  w  == )
           )  ~ _ ~  (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -97,7 +97,7 @@ enum CatFrames {
           /  T   T  \\
          ( ==  ^  == )
           )         (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -106,7 +106,7 @@ enum CatFrames {
           /  ;   ;  \\
          ( ==  n  == )
           )         (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -115,7 +115,7 @@ enum CatFrames {
           /  T   T  \\
          ( ==  ^  == )
           )    .    (
-         ( {{WORD}} )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -128,7 +128,7 @@ enum CatFrames {
           /  ◉   ◉  \\
          ( ==  ^  == )
           )    ~    (
-         (   🍖...   )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -136,8 +136,8 @@ enum CatFrames {
            /\\_____/\\
           /  ◉   ◉  \\
          ( ==  ^  == )
-          )  💧     (
-         (  🍖...    )
+          )    .    (
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -146,7 +146,7 @@ enum CatFrames {
           /  ◉   ◉  \\
          ( ==  ω  == )
           )    ~    (
-         (    🍖..   )
+         (           )
           (  ) _ (  )
            ~~     ~~/
         """,
@@ -183,12 +183,12 @@ enum CatFrames {
         """,
     ]
 
-    // MARK: - Eating (chewing, food emoji swap, satisfied)
+    // MARK: - Eating (chewing, satisfied)
     static let eating: [String] = [
         """
            /\\_____/\\
           /  o   o  \\
-         ( == {{FOOD}} == )
+         ( ==  w  == )
           )         (
          (           )
           (  ) _ (  )
@@ -197,7 +197,7 @@ enum CatFrames {
         """
            /\\_____/\\
           /  -   -  \\
-         ( == {{FOOD}} == )
+         ( ==  w  == )
           )  ~   ~  (
          (           )
           (  ) _ (  )
@@ -206,36 +206,36 @@ enum CatFrames {
         """
            /\\_____/\\
           /  ^   ^  \\
-         ( == {{FOOD}} == )
+         ( ==  ω  == )
           )  \\   /  (
-         (  もぐもぐ   )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
         """
            /\\_____/\\
           /  -   -  \\
-         ( == {{FOOD}} == )
+         ( ==  w  == )
           )  ~   ~  (
-         (  もぐもぐ   )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
         """
-         🎉/\\_____/\\🎉
+           /\\_____/\\
           /  ^   ^  \\
-         ( ==  ❤️ == )
+         ( ==  w  == )
           ) ~  _  ~ (
-         (   おいしい  )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
         """
-         🎉/\\_____/\\🎉
+           /\\_____/\\
           /  ^   ^  \\
-         ( ==  ❤️ == )
+         ( ==  w  == )
           )         (
-         (   おいしい  )
+         (           )
           (  ) _ (  )
            ~~     ~~/
         """,
@@ -247,7 +247,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ~  == )
           )         (
-         (  太撑了😫  )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -256,7 +256,7 @@ enum CatFrames {
           /  -   -  \\
          ( ==  ~  == )
           )         (
-         (  不吃了🙁  )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -265,7 +265,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ~  == )
           )         (
-         (  好饱啊😣  )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -293,7 +293,7 @@ enum CatFrames {
         """
            /\\_____/\\
           /  o   o  \\
-         ( == 🤢 == )
+         ( ==  n  == )
           )  / _ \\  (
          (           )
           (  ) _ (  )
@@ -308,7 +308,7 @@ enum CatFrames {
           /  o   o  \\    o
          ( ==  ^  == ) o
           )~~~~~~~~~(
-         (  ~水花~   )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -317,7 +317,7 @@ enum CatFrames {
           /  >   <  \\  o
          ( ==  ^  == )   o
           )~~~~~~~~~(
-         (  不要洗！  )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -326,7 +326,7 @@ enum CatFrames {
           /  -   -  \\    o
          ( ==  ^  == ) o
           )~~~~~~~~~(
-         (  ~哗啦~   )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -339,7 +339,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ^  == )
           )         (
-         (    💉     )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -348,7 +348,7 @@ enum CatFrames {
           /  -   -  \\
          ( ==  n  == )
           )    .    (
-         (   难受…   )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -357,7 +357,7 @@ enum CatFrames {
           /  T   T  \\
          ( ==  ^  == )
           )         (
-         (    💉     )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -370,7 +370,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ^  == )
           )         (
-         (  {{EMOJI}}       )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -379,7 +379,7 @@ enum CatFrames {
           /  -   -  \\
          ( ==  n  == )
           )    .    (
-         (  记仇中…  )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -388,7 +388,7 @@ enum CatFrames {
           /  x   x  \\
          ( ==  ^  == )
           )         (
-         (  {{EMOJI}}       )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -396,7 +396,7 @@ enum CatFrames {
            /\\_____/\\
           /  ¬   ¬  \\
          ( ==  ^  == )
-          )  哼。    (
+          )    .    (
          (           )
           (  ) _ (  )
            ~~     ~~
@@ -407,7 +407,7 @@ enum CatFrames {
     static let playing: [String] = [
         """
            /\\_____/\\
-          /  o   o  \\  {{EMOJI}}
+          /  o   o  \\
          ( ==  w  == )
           )  \\   /  (
          (           )
@@ -417,7 +417,7 @@ enum CatFrames {
         """
               /\\_____/\\
              /  ◉   ◉  \\
-         {{EMOJI}} ( ==  w  == )
+             ( ==  w  == )
               )  \\   /  (
              (           )
               (  ) _ (  )
@@ -426,18 +426,18 @@ enum CatFrames {
         """
            /\\_____/\\
           /  o   o  \\
-         ( ==  w  == )  🐾
-          )  {{EMOJI}}     (
+         ( ==  w  == )
+          )  \\   /  (
          (           )
           (  ) _ (  )
            ~~     ~~/
         """,
         """
-           /\\_____/\\  💥
+           /\\_____/\\
           /  >   <  \\
          ( ==  w  == )
-          )     {{EMOJI}}  (
-         (  扑！      )
+          )  \\   /  (
+         (           )
           (  ) _ (  )
           \\~~     ~~
         """,
@@ -446,32 +446,32 @@ enum CatFrames {
     // MARK: - Headpat (purring, melting, nuzzling)
     static let headpat: [String] = [
         """
-              ✋
+              |
            /\\_____/\\
           /  ^   ^  \\
          ( ==  w  == )
           ) ~     ~ (
-         (   purr~   )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
         """
-             ✋
+             |
            /\\_____/\\
           /  -   -  \\
          ( ==  w  == )
           )  ~   ~  (
-         (  咕噜咕噜  )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
         """
-              ✋
+              |
            /\\_____/\\
           /  ^   ^  \\
          ( ==  ω  == )
           ) ~  _  ~ (
-         (   purr♡   )
+         (           )
           (  ) _ (  )
            ~~     ~~/
         """,
@@ -500,7 +500,7 @@ enum CatFrames {
         """
           \\~~     ~~/
           (  ) _ (  )
-         (   蹬蹬蹬   )
+         (    ~  ~   )
           )  @   @  (
          ( ==  ω  == )
           \\  ^   ^  /
@@ -524,7 +524,7 @@ enum CatFrames {
           /  >   <  \\
          ( == /// == )
           )  ~   ~  (
-         (   别看！   )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -577,7 +577,7 @@ enum CatFrames {
           /  ^   ^  \\
          ( ==  w  == )
           )  ~   ~  (
-         (    ♪      )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -586,7 +586,7 @@ enum CatFrames {
           /  ^   ^  \\  ♪
          ( ==  w  == )
           )         (
-         (      ♪    )
+         (           )
           (  ) _ (  )
            ~~     ~~/
         """,
@@ -595,20 +595,20 @@ enum CatFrames {
           /  ^   ^  \\
          ( ==  ω  == )
           )  ~   ~  (
-         (   ♪  ♫   )
+         (           )
           (  ) _ (  )
           \\~~     ~~
         """,
     ]
 
-    // MARK: - Dead
-    static let dead: [String] = [
+    // MARK: - Away
+    static let away: [String] = [
         """
            /\\_____/\\
-          /  x   x  \\
+          /  -   -  \\
          ( ==  ^  == )
-          )         (
-         (    🪦     )
+          )  ___    (
+         (  /   \\    )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -621,7 +621,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  O  == )
           )         (
-         (  哈～欠…   )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -639,7 +639,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ^  == )
           )         (
-         (  伸懒腰～  )
+         (           )
           (  ) _ (  )
            ~~     ~~/
         """,
@@ -650,13 +650,13 @@ enum CatFrames {
         """
               /\\_____/\\
              /  ◉   ◉  \\
-            ( ==  w  == ) 💨
+            ( ==  w  == ) ...
              ) ~   ~ (
             (         )
              ~~ _ ~~
         """,
         """
-        💨   /\\_____/\\
+        ...  /\\_____/\\
             /  ◉   ◉  \\
            ( ==  w  == )
             ) ~   ~ (
@@ -664,11 +664,11 @@ enum CatFrames {
             ~~ _ ~~
         """,
         """
-           /\\_____/\\  💨💨
+           /\\_____/\\  ...
           /  ◉   ◉  \\
          ( ==  w  == )
           ) ~   ~ (
-         (  发疯！   )
+         (           )
           ~~ _ ~~
         """,
     ]
@@ -679,8 +679,8 @@ enum CatFrames {
            /\\_____/\\
           /  -   -  \\
          ( ==  ^  == )
-          )    👅   (
-         (  舔爪子    )
+          )    ~    (
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -688,8 +688,8 @@ enum CatFrames {
            /\\_____/\\
           /  -   -  \\
          ( ==  ^  == )
-          ) 👅      (
-         (  洗脸中    )
+          )  ~     (
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -698,7 +698,7 @@ enum CatFrames {
           /  o   o  \\
          ( ==  ^  == )
           )         (
-         (  整理毛发  )
+         (           )
           (  ) _ (  )
            ~~     ~~
         """,
@@ -707,20 +707,361 @@ enum CatFrames {
     // MARK: - Special: Excited / Surprised
     static let excited: [String] = [
         """
-           /\\_____/\\  ！
+           /\\_____/\\  !
           /  ◉   ◉  \\
          ( ==  △  == )
-          )  ！！  (
+          )  \\ /   (
          (           )
           (  ) _ (  )
            ~~     ~~
         """,
         """
-         ！ /\\_____/\\  ！
+         ! /\\_____/\\  !
           /  ◉   ◉  \\
          ( ==  ω  == )
           )         (
-         (   ！！！  )
+         (           )
+          (  ) _ (  )
+           ~~     ~~/
+        """,
+    ]
+
+    // MARK: - Behavior: Waiting (soft eye contact, leaning closer)
+    static let waiting: [String] = [
+        """
+           /\\_____/\\
+          /  o   o  \\
+         ( ==  ^  == )
+          )    ~    (
+         (           )
+          (  ) _ (  )
+           ~~     ~~
+        """,
+        """
+           /\\_____/\\
+          /  -   -  \\
+         ( ==  w  == )
+          )  ~   ~  (
+         (           )
+          (  ) _ (  )
+           ~~     ~~/
+        """,
+        """
+           /\\_____/\\
+          /  o   o  \\
+         ( ==  ^  == )
+          )    ~    (
+         (           )
+          (  ) _ (  )
+          \\~~     ~~
+        """,
+    ]
+
+    // MARK: - Behavior: Hiding (box peek, boundary)
+    static let hiding: [String] = [
+        """
+            ___________
+           /  /\\___/\\  \\
+          |  /  o o  \\ |
+          | ( == ^ == )|
+          |  )       ( |
+          |____________|
+             ~~   ~~
+        """,
+        """
+            ___________
+           /           \\
+          |   /\\___/\\  |
+          |  /  - -  \\ |
+          | ( == n == )|
+          |___________|
+             ~~   ~~
+        """,
+        """
+            ___________
+           /  /\\___/\\  \\
+          |  /  o <  \\ |
+          | ( == ^ == )|
+          |  )       ( |
+          |____________|
+             ~~   ~~/
+        """,
+    ]
+
+    // MARK: - Behavior: Searching Food (sniffing, bowl check)
+    static let searchingFood: [String] = [
+        """
+           /\\_____/\\
+          /  ◉   ◉  \\
+         ( ==  ^  == )
+          )   . .   (
+         (           )
+          (  ) _ (  )
+           ~~     ~~
+        """,
+        """
+              /\\_____/\\
+             /  ◉   ◉  \\
+             ( ==  ^  == )
+             )   ...   (
+            (           )
+             (  ) _ (  )
+              ~~     ~~
+        """,
+        """
+           /\\_____/\\
+          /  ◉   ◉  \\  !
+         ( ==  ω  == )
+          )    .    (
+         (           )
+          (  ) _ (  )
+           ~~     ~~/
+        """,
+    ]
+
+    // MARK: - Behavior: Napping (curled, breathing)
+    static let napping: [String] = [
+        """
+              z
+           /\\_____/\\
+          /  -   -  \\
+         ( ==  w  == )
+          )  _____  (
+         (  /     \\  )
+           ~~     ~~
+        """,
+        """
+             Z  z
+           /\\_____/\\
+          /  -   -  \\
+         ( ==  ω  == )
+          )  _____  (
+         (  /     \\  )
+           ~~     ~~
+        """,
+        """
+                z
+           /\\_____/\\
+          /  -   -  \\
+         ( ==  w  == )
+          )  _____  (
+         (  /     \\  )
+           ~~     ~~
+        """,
+    ]
+
+    // MARK: - Behavior: Investigating (sniff, inspect)
+    static let investigating: [String] = [
+        """
+           /\\_____/\\   ?
+          /  o   o  \\
+         ( ==  ^  == )
+          )    .    (
+         (           )
+          (  ) _ (  )
+           ~~     ~~
+        """,
+        """
+           /\\_____/\\
+          /  o   -  \\  ??
+         ( ==  ^  == )
+          )  .      (
+         (           )
+          (  ) _ (  )
+           ~~     ~~/
+        """,
+        """
+           /\\_____/\\
+          /  ◉   ◉  \\
+         ( ==  △  == )
+          )  \\ /   (
+         (           )
+          (  ) _ (  )
+          \\~~     ~~
+        """,
+    ]
+
+    // MARK: - Behavior: Guarding Belly (defensive, trust boundary)
+    static let guardingBelly: [String] = [
+        """
+           /\\_____/\\
+          /  ¬   ¬  \\
+         ( ==  ^  == )
+          )  _ _   (
+         (           )
+          (  ) _ (  )
+           ~~     ~~
+        """,
+        """
+           /\\_____/\\
+          /  o   o  \\
+         ( ==  n  == )
+          )   _ _  (
+         (           )
+          (  ) _ (  )
+           ~~     ~~/
+        """,
+        """
+           /\\_____/\\
+          /  -   -  \\
+         ( ==  ^  == )
+          )  _ _   (
+         (           )
+          (  ) _ (  )
+          \\~~     ~~
+        """,
+    ]
+
+    // MARK: - Behavior: Writing Diary (private inner life)
+    static let writingDiary: [String] = [
+        """
+           /\\_____/\\
+          /  o   o  \\
+         ( ==  ^  == )
+          )   /    (
+         (           )
+          (  ) _ (  )
+           ~~     ~~
+        """,
+        """
+           /\\_____/\\
+          /  -   o  \\
+         ( ==  ^  == )
+          )  //    (
+         (           )
+          (  ) _ (  )
+           ~~     ~~/
+        """,
+        """
+           /\\_____/\\  ...
+          /  o   -  \\
+         ( ==  ^  == )
+          )   /    (
+         (           )
+          (  ) _ (  )
+          \\~~     ~~
+        """,
+    ]
+
+    // MARK: - Behavior: Showing Off (performing, playful pride)
+    static let showingOff: [String] = [
+        """
+         * /\\_____/\\ *
+          /  ^   ^  \\
+         ( ==  w  == )
+          )  \\   /  (
+         (           )
+          (  ) _ (  )
+           ~~     ~~
+        """,
+        """
+           /\\_____/\\   *
+          /  ^   ^  \\
+         ( ==  ω  == )
+          ) ~  _  ~ (
+         (           )
+          (  ) _ (  )
+           ~~     ~~/
+        """,
+        """
+         * /\\_____/\\
+          /  ◉   ◉  \\
+         ( ==  w  == )
+          )  \\ /   (
+         (           )
+          (  ) _ (  )
+          \\~~     ~~
+        """,
+    ]
+
+    // MARK: - Behavior: Sulking (turned away, moody but reachable)
+    static let sulking: [String] = [
+        """
+           /\\_____/\\
+          /  ¬   ¬  \\
+         ( ==  n  == )
+          )         (
+         (           )
+          (  ) _ (  )
+           ~~     ~~
+        """,
+        """
+              /\\_____/\\
+             /  -   -  \\
+            ( ==  n  == )
+             )    .    (
+            (           )
+             (  ) _ (  )
+              ~~     ~~
+        """,
+        """
+           /\\_____/\\
+          /  o   ¬  \\
+         ( ==  n  == )
+          )    ...  (
+         (           )
+          (  ) _ (  )
+           ~~     ~~/
+        """,
+    ]
+
+    // MARK: - Behavior: Plotting (tiny schemes)
+    static let plotting: [String] = [
+        """
+           /\\_____/\\  ...
+          /  ¬   ¬  \\
+         ( ==  w  == )
+          )    .    (
+         (           )
+          (  ) _ (  )
+           ~~     ~~
+        """,
+        """
+           /\\_____/\\
+          /  -   ¬  \\
+         ( ==  w  == )
+          )    .    (
+         (           )
+          (  ) _ (  )
+           ~~     ~~/
+        """,
+        """
+           /\\_____/\\  !
+          /  ◉   ◉  \\
+         ( ==  w  == )
+          )  \\ /   (
+         (           )
+          (  ) _ (  )
+          \\~~     ~~
+        """,
+    ]
+
+    // MARK: - Behavior: Leaving (edge state, emotional stakes)
+    static let leaving: [String] = [
+        """
+           /\\_____/\\
+          /  T   T  \\
+         ( ==  ^  == )
+          )         (
+         (           )
+          (  ) _ (  )
+           ~~     ~~
+        """,
+        """
+              /\\_____/\\
+             /  ;   ;  \\
+            ( ==  n  == )
+             )       (
+            (           )
+             (  ) _ (  )
+              ~~     ~~
+        """,
+        """
+           /\\_____/\\
+          /  T   T  \\
+         ( ==  ^  == )
+          )    .    (
+         (           )
           (  ) _ (  )
            ~~     ~~/
         """,
@@ -736,7 +1077,7 @@ enum CatFrames {
         case .hungry: hungry
         case .sick: sick
         case .sleeping: sleeping
-        case .dead: dead
+        case .away: away
         case .eating: eating
         case .playing: playing
         case .bathing: bath
@@ -749,35 +1090,45 @@ enum CatFrames {
         }
     }
 
-    static func replaceEmoji(in frame: String, emoji: String, word: String? = nil) -> String {
-        var result = frame
-            .replacingOccurrences(of: "{{FOOD}}", with: emoji)
-            .replacingOccurrences(of: "{{EMOJI}}", with: emoji)
-        let fill = word ?? ""
-        let padded = centerInSlot(fill, slotWidth: 8)
-        result = result.replacingOccurrences(of: "{{WORD}}", with: padded)
-        return result
-    }
+    static func frames(for mood: CatMood, behavior: CatBehaviorKind?) -> [String] {
+        guard let behavior, behavior.displayMood == mood else {
+            return frames(for: mood)
+        }
 
-    private static func displayWidth(_ s: String) -> Int {
-        s.unicodeScalars.reduce(0) { acc, sc in
-            let v = sc.value
-            if (0x2E80...0x9FFF).contains(v) || (0xFF01...0xFF60).contains(v) ||
-               (0xFFE0...0xFFE6).contains(v) || (0x3000...0x303F).contains(v) ||
-               (0x20000...0x3134F).contains(v) || (0x3400...0x4DBF).contains(v) {
-                return acc + 2
-            }
-            return acc + 1
+        switch behavior {
+        case .idle:
+            return frames(for: mood)
+        case .waiting:
+            return waiting
+        case .hiding:
+            return hiding
+        case .searchingFood:
+            return searchingFood
+        case .napping:
+            return napping
+        case .grooming:
+            return grooming
+        case .investigating:
+            return investigating
+        case .guardingBelly:
+            return guardingBelly
+        case .writingDiary:
+            return writingDiary
+        case .showingOff:
+            return showingOff
+        case .sulking:
+            return sulking
+        case .plotting:
+            return plotting
+        case .leaving:
+            return leaving
         }
     }
 
-    private static func centerInSlot(_ text: String, slotWidth: Int) -> String {
-        let w = displayWidth(text)
-        guard w < slotWidth else { return text }
-        let totalPad = slotWidth - w
-        let left = totalPad / 2
-        let right = totalPad - left
-        return String(repeating: " ", count: left) + text + String(repeating: " ", count: right)
+    static func replaceEmoji(in frame: String, emoji: String, word: String? = nil) -> String {
+        _ = emoji
+        _ = word
+        return frame
     }
 
     static let idleSpecials: [[String]] = [stretching, zoomies, grooming, excited]

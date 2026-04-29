@@ -11,11 +11,9 @@ struct CatProfileView: View {
                     bondSection
                     personaReportSection
                     growthSection
-                    streakSection
                     traitsSection
                     diaryPreviewSection
                     titlesSection
-                    treasuresSection
                 }
                 .padding()
             }
@@ -230,62 +228,6 @@ struct CatProfileView: View {
         }
     }
 
-    // MARK: - Streak
-
-    private var streakSection: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Text("🔥 签到")
-                    .font(.headline)
-                Spacer()
-                if store.state.streak.checkedInToday {
-                    Text("今日已签到 ✓")
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                }
-            }
-
-            HStack(spacing: 16) {
-                streakStat("连续", "\(store.state.streak.currentStreak)天")
-                streakStat("最长", "\(store.state.streak.longestStreak)天")
-                streakStat("累计", "\(store.state.streak.totalCheckIns)次")
-            }
-
-            if !store.state.streak.checkedInToday {
-                Button {
-                    store.checkDailyStreak()
-                } label: {
-                    Text("签到领取奖励")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(LinearGradient(
-                                    colors: [.orange, .pink],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                ))
-                        )
-                }
-            }
-        }
-        .profileCard()
-    }
-
-    private func streakStat(_ label: String, _ value: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.title3.weight(.bold))
-                .foregroundStyle(CozyPalette.textPrimary)
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(CozyPalette.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
     // MARK: - Traits
 
     private var traitsSection: some View {
@@ -489,69 +431,6 @@ struct CatProfileView: View {
         .opacity(unlocked ? 1 : 0.6)
     }
 
-    // MARK: - Treasures
-
-    private var treasuresSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("💎 宝物收藏")
-                    .font(.headline)
-                Spacer()
-                Text("\(store.state.treasures.count)件")
-                    .font(.caption)
-                    .foregroundStyle(CozyPalette.textSecondary)
-            }
-
-            if store.state.treasures.isEmpty {
-                Text("还没有宝物…多和猫咪互动，它会给你带回宝物的！")
-                    .font(.caption)
-                    .foregroundStyle(CozyPalette.textSecondary)
-            } else {
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 8),
-                    GridItem(.flexible(), spacing: 8),
-                    GridItem(.flexible(), spacing: 8),
-                ], spacing: 8) {
-                    ForEach(store.state.treasures) { treasure in
-                        treasureCell(treasure)
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .profileCard()
-    }
-
-    private func treasureCell(_ treasure: Treasure) -> some View {
-        VStack(spacing: 4) {
-            Text(treasure.emoji)
-                .font(.title)
-            Text(treasure.name)
-                .font(.caption2.weight(.medium))
-                .foregroundStyle(CozyPalette.textPrimary)
-            Text(treasure.rarity.label)
-                .font(.system(size: 9))
-                .foregroundStyle(rarityColor(treasure.rarity))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(CozyPalette.cardAdaptive)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(rarityColor(treasure.rarity).opacity(0.4), lineWidth: 1)
-                )
-        )
-    }
-
-    private func rarityColor(_ rarity: TreasureRarity) -> Color {
-        switch rarity {
-        case .common: .gray
-        case .rare: .purple
-        case .legendary: .orange
-        }
-    }
 }
 
 struct CatDiaryView: View {
@@ -591,7 +470,7 @@ struct CatDiaryView: View {
     private var personaCard: some View {
         let report = store.state.personaReport
 
-        VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 8) {
             Text("今日猫格")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(CozyPalette.textSecondary)

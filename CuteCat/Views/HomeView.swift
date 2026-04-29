@@ -4,7 +4,6 @@ struct HomeView: View {
     @EnvironmentObject private var store: PetStore
     @StateObject private var speech = SpeechService()
     @State private var showChat = false
-    @State private var showStatus = false
     @State private var showSettings = false
     @State private var showProfile = false
     @State private var showDiary = false
@@ -29,12 +28,6 @@ struct HomeView: View {
 
                 Spacer(minLength: 0)
 
-                if showStatus {
-                    StatusView(state: store.state)
-                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                        .padding(.bottom, 8)
-                }
-
                 modelStatusBadge
                     .padding(.bottom, 4)
 
@@ -42,6 +35,8 @@ struct HomeView: View {
                     revivalArea
                         .padding(.bottom, 8)
                 } else {
+                    careInsightBar
+                        .padding(.bottom, 8)
                     actionGrid
                         .padding(.bottom, 8)
                 }
@@ -70,33 +65,18 @@ struct HomeView: View {
                 if let banner = store.growthBanner {
                     notificationBanner(text: banner, color: .green)
                 }
-                if let banner = store.streakBanner {
-                    notificationBanner(text: banner, color: .orange)
-                }
                 if let diary = store.diaryBanner {
                     notificationBanner(text: "\(diary.mood.emoji) 新猫日记：\(diary.text)", color: .pink)
                 }
                 if let banner = store.bondChangeBanner {
                     notificationBanner(text: banner, color: CozyPalette.moss)
                 }
-                if let title = store.newTitleBanner {
-                    notificationBanner(text: "\(title.emoji) 解锁称号「\(title.name)」！", color: .purple)
-                }
-                if let treasure = store.newTreasureBanner {
-                    notificationBanner(
-                        text: "\(treasure.emoji) 发现宝物「\(treasure.name)」(\(treasure.rarity.label))！",
-                        color: treasure.rarity == .legendary ? .orange : .blue
-                    )
-                }
                 Spacer()
             }
             .padding(.top, 60)
             .animation(.spring(response: 0.4), value: store.growthBanner)
-            .animation(.spring(response: 0.4), value: store.streakBanner)
             .animation(.spring(response: 0.4), value: store.diaryBanner?.id)
             .animation(.spring(response: 0.4), value: store.bondChangeBanner)
-            .animation(.spring(response: 0.4), value: store.newTitleBanner?.id)
-            .animation(.spring(response: 0.4), value: store.newTreasureBanner?.id)
         }
         .sheet(isPresented: $showChat) {
             ChatView()
@@ -114,7 +94,6 @@ struct HomeView: View {
             CatDiaryView()
                 .environmentObject(store)
         }
-        .animation(.easeInOut(duration: 0.3), value: showStatus)
         .animation(.easeInOut(duration: 0.3), value: store.currentMood)
         .animation(.easeInOut(duration: 0.3), value: store.pendingEvent != nil)
         .animation(.easeInOut(duration: 0.3), value: store.eventResult)
@@ -128,10 +107,14 @@ struct HomeView: View {
                 }
             }
         }
-        .onChange(of: store.pendingSpeak) { _, text in
-            guard let text, !text.isEmpty else { return }
-            store.pendingSpeak = nil
-            speech.speak(text, style: store.state.voiceStyle)
+        .onChange(of: store.isGeneratingReply) { _, isGenerating in
+            guard !isGenerating, speech.voiceModeActive, !speech.isListening else { return }
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(450))
+                if speech.voiceModeActive && !speech.isListening && !store.isGeneratingReply {
+                    speech.startListening()
+                }
+            }
         }
         .task {
             await store.checkDailyBondMoment()
@@ -150,19 +133,15 @@ struct HomeView: View {
                 Spacer()
 
                 HStack(spacing: 12) {
-                    if speech.isSpeaking {
-                        headerIcon("speaker.slash.fill") { speech.stopSpeaking() }
-                    }
                     headerIcon("book.closed") { showDiary = true }
                     headerIcon("gearshape") { showSettings = true }
                     headerIcon("trophy") { showProfile = true }
-                    headerIcon(showStatus ? "chart.bar.fill" : "chart.bar") { showStatus.toggle() }
                 }
             }
 
             HStack(spacing: 0) {
                 if store.state.isDead {
-                    Text("\(store.catName)已经离开了…")
+                    Text("\(store.catName)躲起来了")
                         .font(.caption2)
                         .foregroundStyle(headerSubtextColor)
                 } else {
@@ -265,7 +244,8 @@ struct HomeView: View {
             mood: store.currentMood,
             comment: nil,
             emoji: store.lastActionEmoji ?? "🐟",
-            moodWord: store.catMoodWord
+            moodWord: store.catMoodWord,
+            behavior: store.state.currentBehavior
         ) { interaction in
             Task { await store.performInteraction(interaction) }
         }
@@ -396,15 +376,6 @@ struct HomeView: View {
                     .font(.caption)
                     .foregroundStyle(headerSubtextColor)
             }
-        } else if speech.isSpeaking {
-            HStack(spacing: 6) {
-                Image(systemName: "speaker.wave.2.fill")
-                    .font(.caption)
-                    .foregroundStyle(CozyPalette.moss)
-                Text("\(store.catName)正在说话…")
-                    .font(.caption)
-                    .foregroundStyle(headerSubtextColor)
-            }
         } else {
             HStack(spacing: 4) {
                 voiceDot
@@ -424,46 +395,81 @@ struct HomeView: View {
 
     // MARK: - Action Grid
 
+    private var careInsightBar: some View {
+        let insight = store.careInsight
+
+        return HStack(spacing: 10) {
+            Image(systemName: insight.icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(insight.tint)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(insight.tint.opacity(0.12)))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(insight.title)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(headerTextColor)
+                    .lineLimit(1)
+                Text(insight.detail)
+                    .font(.caption2)
+                    .foregroundStyle(headerSubtextColor)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(CozyPalette.cardAdaptive.opacity(0.92))
+                .shadow(color: CozyPalette.shadowAdaptive, radius: 3, y: 1)
+        )
+        .padding(.horizontal, 16)
+    }
+
     private var actionGrid: some View {
-        HStack(spacing: 14) {
-            CozyActionButton(title: "喂食", icon: "fork.knife", tint: .orange) {
-                Task { await store.performInteraction(.feed) }
-            }
-            CozyActionButton(title: "玩耍", icon: "gamecontroller.fill", tint: CozyPalette.moss) {
-                Task { await store.performInteraction(.play) }
-            }
-            CozyActionButton(title: "清洁", icon: "shower.fill", tint: CozyPalette.sky) {
-                Task { await store.performInteraction(.clean) }
-            }
-            CozyActionButton(title: "观察", icon: "eye.fill", tint: CozyPalette.wood) {
-                Task { await store.observeCat() }
-            }
-            CozyActionButton(title: "看病", icon: "cross.case.fill", tint: CozyPalette.rose) {
-                Task { await store.performInteraction(.medical) }
-            }
-            CozyActionButton(title: "陪伴", icon: "heart.circle.fill", tint: .purple) {
-                Task { await store.comfortCat() }
+        HStack(spacing: 10) {
+            ForEach(store.contextualActions) { action in
+                CozyActionButton(title: action.title, icon: action.icon, tint: action.tint) {
+                    runContextAction(action)
+                }
             }
         }
         .padding(.horizontal, 16)
         .disabled(store.pendingEvent != nil)
     }
 
-    // MARK: - Revival
+    private func runContextAction(_ action: CatContextAction) {
+        Task {
+            switch action.command {
+            case .interaction(let interaction):
+                await store.performInteraction(interaction)
+            case .observe:
+                await store.observeCat()
+            case .comfort:
+                await store.comfortCat()
+            case .giveSpace:
+                await store.giveCatSpace()
+            }
+        }
+    }
+
+    // MARK: - Calling Back
 
     private var revivalArea: some View {
         VStack(spacing: 12) {
-            Text("\(store.catName)已经离开了…")
+            Text("\(store.catName)躲起来了，只在暗处偷偷听你说话。")
                 .font(.subheadline)
                 .foregroundStyle(headerSubtextColor)
 
             Button {
-                Task { await store.reviveCat() }
+                Task { await store.callCatBack() }
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "arrow.counterclockwise.circle.fill")
+                    Image(systemName: "hand.raised.fill")
                         .font(.system(size: 20))
-                    Text("再来一次")
+                    Text("慢慢叫它回来")
                         .font(.subheadline.weight(.semibold))
                 }
                 .foregroundStyle(.white)
@@ -477,11 +483,9 @@ struct HomeView: View {
             }
             .buttonStyle(SoftPressStyle())
 
-            if store.state.affinity > 0 {
-                Text("消耗 30 好感度")
-                    .font(.caption2)
-                    .foregroundStyle(headerSubtextColor.opacity(0.6))
-            }
+            Text("它不会消失，只是需要一点耐心。")
+                .font(.caption2)
+                .foregroundStyle(headerSubtextColor.opacity(0.6))
         }
         .padding(.horizontal, 16)
     }
@@ -533,7 +537,7 @@ struct HomeView: View {
 
     private var moodWeather: WeatherCondition {
         let s = store.state
-        if s.isDead { return .snow }
+        if s.isDead { return .fog }
         if s.happiness == 0 && s.health <= 2 { return .rain }
         if s.happiness <= 1 { return .cloudy }
         if s.health <= 1 { return .fog }

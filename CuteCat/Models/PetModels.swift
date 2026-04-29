@@ -73,7 +73,7 @@ enum CatMood: String, Codable, Sendable {
     case hungry
     case sick
     case sleeping
-    case dead
+    case away
     case eating
     case playing
     case bathing
@@ -92,7 +92,7 @@ enum CatMood: String, Codable, Sendable {
         case .hungry: "🙀"
         case .sick: "😾"
         case .sleeping: "😽"
-        case .dead: "🪦"
+        case .away: "🌙"
         case .eating: "😻"
         case .playing: "😹"
         case .bathing: "🫧"
@@ -204,22 +204,6 @@ struct MemoryNode: Identifiable, Codable, Sendable {
             createdAt: .now,
             embedding: []
         )
-    }
-}
-
-// MARK: - Shop
-
-struct ShopItem: Identifiable, Codable, Hashable, Sendable {
-    let id: UUID
-    let name: String
-    let emoji: String
-    let desc: String
-
-    init(id: UUID = UUID(), name: String, emoji: String, desc: String) {
-        self.id = id
-        self.name = name
-        self.emoji = emoji
-        self.desc = desc
     }
 }
 
@@ -399,84 +383,6 @@ enum AffinityLevel: String, Sendable {
 
 // MARK: - Pet State
 
-// MARK: - Voice Style
-
-enum VoiceStyle: String, Codable, CaseIterable, Sendable {
-    case cute
-    case baby
-    case hyper
-    case cool
-    case gremlin
-    case elder
-    case robot
-    case demon
-
-    var title: String {
-        switch self {
-        case .cute: "软萌"
-        case .baby: "奶音"
-        case .hyper: "鸡血"
-        case .cool: "高冷"
-        case .gremlin: "小恶魔"
-        case .elder: "老妖怪"
-        case .robot: "电音"
-        case .demon: "深渊"
-        }
-    }
-
-    var emoji: String {
-        switch self {
-        case .cute: "🥰"
-        case .baby: "👶"
-        case .hyper: "⚡"
-        case .cool: "🧊"
-        case .gremlin: "😈"
-        case .elder: "👴"
-        case .robot: "🤖"
-        case .demon: "👹"
-        }
-    }
-
-    var desc: String {
-        switch self {
-        case .cute: "甜到齁死的撒娇音"
-        case .baby: "奶声奶气小不点"
-        case .hyper: "语速暴走兴奋猫"
-        case .cool: "慢悠悠爱理不理"
-        case .gremlin: "尖锐又快的坏笑"
-        case .elder: "颤巍巍老猫念经"
-        case .robot: "机器人电音猫"
-        case .demon: "来自深渊的低吟"
-        }
-    }
-
-    var rate: Float {
-        switch self {
-        case .cute: 0.52
-        case .baby: 0.60
-        case .hyper: 0.65
-        case .cool: 0.35
-        case .gremlin: 0.62
-        case .elder: 0.30
-        case .robot: 0.42
-        case .demon: 0.32
-        }
-    }
-
-    var pitch: Float {
-        switch self {
-        case .cute: 1.45
-        case .baby: 1.7
-        case .hyper: 1.55
-        case .cool: 0.85
-        case .gremlin: 1.8
-        case .elder: 0.65
-        case .robot: 0.5
-        case .demon: 0.5
-        }
-    }
-}
-
 // MARK: - Achievements / Titles
 
 struct CatTitle: Identifiable, Codable, Hashable, Sendable {
@@ -491,10 +397,9 @@ enum TitleDefinition: String, CaseIterable {
     case firstMeet       // 初次见面
     case talkative       // 话唠
     case wellFed         // 小胖墩
-    case survivor        // 九命怪猫
+    case survivor        // 回家的猫
     case bestFriend      // 最好的朋友
     case adventurer      // 冒险家
-    case collector       // 收藏家
     case earlyBird       // 早起的猫
     case nightOwl        // 夜猫子
     case shopaholic      // 日记收藏家
@@ -504,10 +409,9 @@ enum TitleDefinition: String, CaseIterable {
         case .firstMeet: "初来乍到"
         case .talkative: "话唠猫猫"
         case .wellFed: "小胖墩"
-        case .survivor: "九命怪猫"
+        case .survivor: "回家的猫"
         case .bestFriend: "最好的朋友"
         case .adventurer: "冒险家"
-        case .collector: "收藏家"
         case .earlyBird: "早起的猫"
         case .nightOwl: "夜猫子"
         case .shopaholic: "日记收藏家"
@@ -522,7 +426,6 @@ enum TitleDefinition: String, CaseIterable {
         case .survivor: "🐈‍⬛"
         case .bestFriend: "💕"
         case .adventurer: "🗺️"
-        case .collector: "💎"
         case .earlyBird: "🌅"
         case .nightOwl: "🦉"
         case .shopaholic: "📓"
@@ -534,10 +437,9 @@ enum TitleDefinition: String, CaseIterable {
         case .firstMeet: "第一次和猫咪见面"
         case .talkative: "和猫咪聊天超过20次"
         case .wellFed: "喂食超过30次"
-        case .survivor: "猫咪死而复生"
+        case .survivor: "猫咪曾经躲起来，又被你慢慢叫回来了"
         case .bestFriend: "好感度达到80"
         case .adventurer: "经历10次随机事件"
-        case .collector: "收集5个宝物"
         case .earlyBird: "早上6-8点互动"
         case .nightOwl: "凌晨0-4点互动"
         case .shopaholic: "留下10条猫日记"
@@ -545,57 +447,13 @@ enum TitleDefinition: String, CaseIterable {
     }
 }
 
-// MARK: - Daily Streak
+// MARK: - Day Key
 
-struct DailyStreak: Codable, Sendable {
-    var currentStreak: Int
-    var longestStreak: Int
-    var lastCheckInDate: String
-    var totalCheckIns: Int
-
-    static func initial() -> DailyStreak {
-        DailyStreak(currentStreak: 0, longestStreak: 0, lastCheckInDate: "", totalCheckIns: 0)
-    }
-
+enum DayKey {
     static var todayString: String {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: .now)
-    }
-
-    static var yesterdayString: String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: Calendar.current.date(byAdding: .day, value: -1, to: .now)!)
-    }
-
-    var checkedInToday: Bool {
-        lastCheckInDate == Self.todayString
-    }
-
-    mutating func checkIn() {
-        let today = Self.todayString
-        guard lastCheckInDate != today else { return }
-
-        if lastCheckInDate == Self.yesterdayString {
-            currentStreak += 1
-        } else {
-            currentStreak = 1
-        }
-        longestStreak = max(longestStreak, currentStreak)
-        totalCheckIns += 1
-        lastCheckInDate = today
-    }
-
-    var streakReward: Int {
-        switch currentStreak {
-        case 1: 1
-        case 2: 2
-        case 3: 3
-        case 4...6: 4
-        case 7...: 5
-        default: 1
-        }
     }
 }
 
@@ -720,46 +578,6 @@ struct TraitScore: Codable, Sendable {
     }
 }
 
-// MARK: - Treasures
-
-struct Treasure: Identifiable, Codable, Hashable, Sendable {
-    let id: UUID
-    let name: String
-    let emoji: String
-    let rarity: TreasureRarity
-    let foundAt: Date
-
-    init(id: UUID = UUID(), name: String, emoji: String, rarity: TreasureRarity = .common) {
-        self.id = id
-        self.name = name
-        self.emoji = emoji
-        self.rarity = rarity
-        self.foundAt = .now
-    }
-}
-
-enum TreasureRarity: String, Codable, Sendable {
-    case common
-    case rare
-    case legendary
-
-    var label: String {
-        switch self {
-        case .common: "普通"
-        case .rare: "稀有"
-        case .legendary: "传说"
-        }
-    }
-
-    var color: String {
-        switch self {
-        case .common: "gray"
-        case .rare: "purple"
-        case .legendary: "gold"
-        }
-    }
-}
-
 // MARK: - Growth Stage
 
 enum GrowthStage: String, Codable, CaseIterable, Sendable {
@@ -863,7 +681,6 @@ struct PetState: Codable, Sendable {
     var isDead: Bool
     var comment: String
     var catName: String
-    var voiceStyle: VoiceStyle
 
     var lastTickAt: Date
     var lastEventAt: Date
@@ -871,12 +688,8 @@ struct PetState: Codable, Sendable {
     var chatMessages: [PetChatMessage]
     var memories: [MemoryRecord]
 
-    var inventoryItems: [ShopItem]
     var titles: [CatTitle]
-    var streak: DailyStreak
     var traitScore: TraitScore
-    var treasures: [Treasure]
-    var totalShopBuys: Int
     var totalEvents: Int
     var reviveCount: Int
     var observationCount: Int
@@ -893,7 +706,7 @@ struct PetState: Codable, Sendable {
     }
 
     var mood: CatMood {
-        if isDead { return .dead }
+        if isDead { return .away }
         if health <= 2 { return .sick }
         if hunger >= growthStage.happinessDecayThreshold { return .hungry }
         if happiness <= 2 { return .sad }
@@ -922,18 +735,13 @@ struct PetState: Codable, Sendable {
             isDead: false,
             comment: "一只小猫刚刚来到了这里，好奇地打量着四周。",
             catName: "小猫咪",
-            voiceStyle: .cute,
             lastTickAt: now,
             lastEventAt: now,
             interactions: [],
             chatMessages: [],
             memories: [],
-            inventoryItems: [],
             titles: [],
-            streak: .initial(),
             traitScore: TraitScore(),
-            treasures: [],
-            totalShopBuys: 0,
             totalEvents: 0,
             reviveCount: 0,
             observationCount: 0,
@@ -950,10 +758,10 @@ struct PetState: Codable, Sendable {
 extension PetState {
     private enum CodingKeys: String, CodingKey {
         case happiness, hunger, health, cleanliness, energy, age, affinity, isDead, comment
-        case catName, voiceStyle
-        case lastTickAt, lastEventAt, interactions, chatMessages, memories, inventoryItems
-        case titles, streak, traitScore, treasures
-        case totalShopBuys, totalEvents, reviveCount
+        case catName
+        case lastTickAt, lastEventAt, interactions, chatMessages, memories
+        case titles, traitScore
+        case totalEvents, reviveCount
         case observationCount, comfortCount, diaryEntries, lastDiaryDate
         case currentBehavior
         case localModelFileName, localModelDisplayName
@@ -971,18 +779,14 @@ extension PetState {
         isDead = try c.decode(Bool.self, forKey: .isDead)
         comment = try c.decode(String.self, forKey: .comment)
         catName = try c.decodeIfPresent(String.self, forKey: .catName) ?? "小猫咪"
-        voiceStyle = try c.decodeIfPresent(VoiceStyle.self, forKey: .voiceStyle) ?? .cute
         lastTickAt = try c.decode(Date.self, forKey: .lastTickAt)
         lastEventAt = try c.decodeIfPresent(Date.self, forKey: .lastEventAt) ?? .now
         interactions = try c.decodeIfPresent([InteractionRecord].self, forKey: .interactions) ?? []
         chatMessages = try c.decodeIfPresent([PetChatMessage].self, forKey: .chatMessages) ?? []
         memories = try c.decodeIfPresent([MemoryRecord].self, forKey: .memories) ?? []
-        inventoryItems = try c.decodeIfPresent([ShopItem].self, forKey: .inventoryItems) ?? []
-        titles = try c.decodeIfPresent([CatTitle].self, forKey: .titles) ?? []
-        streak = try c.decodeIfPresent(DailyStreak.self, forKey: .streak) ?? .initial()
+        let decodedTitles = try c.decodeIfPresent([CatTitle].self, forKey: .titles) ?? []
+        titles = decodedTitles.filter { TitleDefinition(rawValue: $0.id) != nil }
         traitScore = try c.decodeIfPresent(TraitScore.self, forKey: .traitScore) ?? TraitScore()
-        treasures = try c.decodeIfPresent([Treasure].self, forKey: .treasures) ?? []
-        totalShopBuys = try c.decodeIfPresent(Int.self, forKey: .totalShopBuys) ?? 0
         totalEvents = try c.decodeIfPresent(Int.self, forKey: .totalEvents) ?? 0
         reviveCount = try c.decodeIfPresent(Int.self, forKey: .reviveCount) ?? 0
         observationCount = try c.decodeIfPresent(Int.self, forKey: .observationCount) ?? 0
@@ -1070,7 +874,7 @@ extension PetState {
             30 + ts.chatCount * 4 + ts.touchCount * 3 + comfortCount * 5 - ts.idleTicks
         )
         let security = clampPersonaAxis(
-            affinity + comfortCount * 4 + observationCount * 2 - ts.disciplineCount * 8 - reviveCount * 10
+            affinity + comfortCount * 4 + observationCount * 2 - ts.disciplineCount * 8 - reviveCount * 6
         )
         let chaos = clampPersonaAxis(
             ts.eventCount * 7 + ts.playCount * 4 + ts.disciplineCount * 6 +
@@ -1101,9 +905,10 @@ extension PetState {
 
     var currentLifeScene: CatLifeScene {
         if isDead {
-            return CatLifeScene(emoji: "🪦", title: "长睡", text: "\(catName)安静地睡着了。")
+            return CatLifeScene(emoji: "🌙", title: "躲起来了", text: "\(catName)躲到了很深的地方，只露出一点点尾巴。")
         }
 
+        let traits = Set(activeTraits)
         let behavior = currentBehavior
         if !behavior.detail.isEmpty {
             return CatLifeScene(emoji: behavior.kind.emoji, title: behavior.title, text: behavior.detail)
@@ -1150,7 +955,7 @@ extension PetState {
         case "EGCD": return ("叛逆小旋风", "越靠近越要装酷，情绪像没拧紧的汽水。")
         case "EGRA": return ("试探型小太阳", "想靠近，但每一步都要先确认安全。")
         case "EGRD": return ("社交防御大师", "会出现，会互动，但心门暂时只开一条缝。")
-        case "ISCA": return ("梦游收藏家", "安静、信任、脑洞大，喜欢把奇怪东西当宝物。")
+        case "ISCA": return ("梦游记录员", "安静、信任、脑洞大，喜欢把小事记成秘密。")
         case "ISCD": return ("独处发明家", "很安全，但更爱自己琢磨世界。")
         case "ISRA": return ("被窝守护灵", "慢热、稳定、柔软，是很适合一起安静待着的猫。")
         case "ISRD": return ("安静租客", "习惯这里了，但仍保留自己的小边界。")

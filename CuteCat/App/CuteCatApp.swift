@@ -30,9 +30,9 @@ struct CuteCatApp: App {
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {
                         store.tick()
-                        store.checkDailyStreak()
                         Task {
                             await store.checkDailyBondMoment()
+                            await store.nudgeAutonomousMoment()
                             await store.tryTriggerEvent()
                         }
                     }

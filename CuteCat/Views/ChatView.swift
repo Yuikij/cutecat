@@ -27,11 +27,6 @@ struct ChatView: View {
         .onChange(of: speech.transcript) { _, newValue in
             draft = newValue
         }
-        .onChange(of: store.pendingSpeak) { _, text in
-            guard let text, !text.isEmpty else { return }
-            store.pendingSpeak = nil
-            speech.speak(text, style: store.state.voiceStyle)
-        }
     }
 
     // MARK: - Navigation Bar
@@ -42,16 +37,6 @@ struct ChatView: View {
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(CozyPalette.plum)
             Spacer()
-
-            if speech.isSpeaking {
-                Button {
-                    speech.stopSpeaking()
-                } label: {
-                    Image(systemName: "speaker.slash.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(CozyPalette.wood)
-                }
-            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

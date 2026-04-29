@@ -179,18 +179,28 @@ struct CozyActionButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(tint)
-                .frame(width: 44, height: 44)
-                .background(
-                    Circle()
-                        .fill(tint.opacity(CozyPalette.isNight ? 0.15 : 0.08))
-                )
-                .overlay(
-                    Circle()
-                        .strokeBorder(tint.opacity(0.12), lineWidth: 0.5)
-                )
+            VStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(tint)
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(tint.opacity(CozyPalette.isNight ? 0.15 : 0.08))
+                    )
+                    .overlay(
+                        Circle()
+                            .strokeBorder(tint.opacity(0.12), lineWidth: 0.5)
+                    )
+
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(CozyPalette.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
         }
         .buttonStyle(SoftPressStyle())
         .accessibilityLabel(title)

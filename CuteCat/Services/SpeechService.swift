@@ -6,78 +6,13 @@ import Speech
 final class SpeechService: ObservableObject {
     @Published var isListening = false
     @Published var transcript = ""
-    @Published var isSpeaking = false
     @Published var didFinishSpeaking = false
     @Published var voiceModeActive = false
 
-    private let synthesizer = AVSpeechSynthesizer()
     private let audioWorker = AudioEngineWorker()
-    private var synthDelegate: SynthDelegate?
     private var silenceTask: Task<Void, Never>?
 
     private let silenceTimeout: TimeInterval = 1.8
-
-    init() {
-        synthDelegate = SynthDelegate { [weak self] in
-            Task { @MainActor in
-                guard let self else { return }
-                self.isSpeaking = false
-                if self.voiceModeActive {
-                    try? await Task.sleep(for: .milliseconds(400))
-                    if self.voiceModeActive && !self.isListening {
-                        self.startListening()
-                    }
-                }
-            }
-        }
-        synthesizer.delegate = synthDelegate
-    }
-
-    // MARK: - TTS
-
-    func speak(_ text: String, style: VoiceStyle = .cute) {
-        synthesizer.stopSpeaking(at: .immediate)
-
-        let cleaned = Self.stripEmoji(text)
-        guard !cleaned.isEmpty else { return }
-
-        let utterance = AVSpeechUtterance(string: cleaned)
-        utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
-        utterance.rate = style.rate
-        utterance.pitchMultiplier = style.pitch
-
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .default)
-        try? session.setActive(true, options: .notifyOthersOnDeactivation)
-
-        isSpeaking = true
-        synthesizer.speak(utterance)
-    }
-
-    private static func stripEmoji(_ text: String) -> String {
-        text.unicodeScalars.filter { scalar in
-            let v = scalar.value
-            if v <= 0x7E { return true }
-            if (0x2E80...0x9FFF).contains(v) { return true }
-            if (0xF900...0xFAFF).contains(v) { return true }
-            if (0xFE30...0xFE4F).contains(v) { return true }
-            if (0xFF00...0xFFEF).contains(v) { return true }
-            if (0x20000...0x2A6DF).contains(v) { return true }
-            if (0x2A700...0x2CEAF).contains(v) { return true }
-            if (0x2CEB0...0x2EBEF).contains(v) { return true }
-            if (0x30000...0x3134F).contains(v) { return true }
-            if (0x3400...0x4DBF).contains(v) { return true }
-            return false
-        }
-        .map { String($0) }
-        .joined()
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    func stopSpeaking() {
-        synthesizer.stopSpeaking(at: .immediate)
-        isSpeaking = false
-    }
 
     // MARK: - Voice Mode
 
@@ -88,7 +23,6 @@ final class SpeechService: ObservableObject {
 
     func exitVoiceMode() {
         voiceModeActive = false
-        stopSpeaking()
         stopListening()
     }
 
@@ -255,21 +189,5 @@ private final class AudioEngineWorker: @unchecked Sendable {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .default)
         try? session.setActive(true, options: .notifyOthersOnDeactivation)
-    }
-}
-
-private final class SynthDelegate: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
-    let onFinish: () -> Void
-
-    init(onFinish: @escaping () -> Void) {
-        self.onFinish = onFinish
-    }
-
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        onFinish()
-    }
-
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        onFinish()
     }
 }
